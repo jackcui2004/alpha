@@ -1,0 +1,2361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>空投收益日历</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <style>
+        /* 核心样式 - 保持不变 */
+        body {
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .calendar-app {
+            max-width: 1050px;
+            width: 100%;
+            background-color: transparent;
+            padding: 35px;
+            border-radius: 24px;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        /* 壁纸背景处理 - 修复逻辑 */
+        .calendar-app::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: var(--current-background); /* 使用CSS变量来设置背景 */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: filter 0.5s ease-in-out, transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            opacity: 0;
+        }
+
+        .calendar-app.has-wallpaper::before {
+            opacity: 1;
+        }
+
+        .calendar-app.wallpaper-blur-active::before {
+            filter: blur(10px);
+            transform: scale(1.05);
+        }
+
+        .calendar-app:not(.has-wallpaper) {
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 2.4rem;
+            font-weight: 700;
+        }
+        .author-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            animation: flash-glow 3s linear infinite;
+            text-align: left;
+            flex-shrink: 0;
+        }
+        .current-time {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            color: #555;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .header-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .month-navigation {
+            display: flex;
+            align-items: center;
+        }
+        .month-navigation h2 {
+            margin: 0 18px;
+            font-size: 1.8rem;
+            color: #333;
+            font-weight: 600;
+            min-width: 180px;
+            text-align: center;
+        }
+        .month-navigation .btn {
+            border: none;
+            background-color: #e9f5ff;
+            color: #007bff;
+            border-radius: 16px;
+            padding: 10px 16px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 123, 255, 0.1);
+        }
+        .month-navigation .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2);
+        }
+        .summary-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            margin: 5px auto 0 auto;
+            gap: 5px;
+            max-width: 450px;
+        }
+        .card-total-summary {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: 100%;
+            text-align: center;
+        }
+        .card-total-summary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+        }
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 100%;
+            gap: 10px;
+        }
+        .summary-actions .btn-export {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 12px 22px;
+            font-weight: 500;
+            transition: background-color 0.2s, box-shadow 0.2s, color 0.2s, transform 0.2s ease;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+        }
+        .summary-actions .btn-export:hover {
+            background-color: #218838;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+            color: white;
+            transform: translateY(-2px);
+        }
+        .summary-actions .btn-clear {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 12px 22px;
+            font-weight: 500;
+            transition: background-color 0.2s, box-shadow 0.2s, color 0.2s, transform 0.2s ease;
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+        }
+        .summary-actions .btn-clear:hover {
+            background-color: #c82333;
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+            transform: translateY(-2px);
+        }
+        .day-header-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+        .day-header {
+            text-align: center;
+            font-weight: 600;
+            color: #666;
+            padding: 5px 0;
+            font-size: 0.95rem;
+        }
+        .calendar-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            margin-bottom: 0;
+            transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: visible;
+        }
+        .calendar-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 5px;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* 保持简化的格子显示 */
+        .day-box {
+            background-color: rgba(252, 252, 252, 0.7);
+            border: 1px solid rgba(224, 224, 224, 0.7);
+            border-radius: 12px;
+            height: 85px;
+            padding: 5px;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            min-width: 0;
+        }
+        .day-box:hover {
+            background-color: rgba(238, 248, 255, 0.85);
+            border-color: #8acaff;
+            box-shadow: 0 6px 15px rgba(0, 123, 255, 0.15);
+            transform: translateY(-2px);
+        }
+        .day-box.is-today {
+            background-color: rgba(255, 251, 230, 0.85);
+            border-color: #ffc107;
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+        }
+        .day-box.is-today .day-number {
+            color: #ffc107;
+        }
+        .day-number {
+            font-weight: bold;
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 1px;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .day-box.other-month {
+            background-color: rgba(248, 248, 248, 0.5);
+            color: #b0b0b0;
+            pointer-events: none;
+            box-shadow: none;
+            border: 1px solid rgba(240, 240, 240, 0.5);
+        }
+
+        .entry-item {
+            font-size: 0.85rem;
+            line-height: 1.1;
+            font-weight: 500;
+            margin: 0;
+            padding: 0;
+            border-radius: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            box-shadow: none;
+            border: none !important;
+            max-width: 100%;
+        }
+        .entry-item-name {
+            font-weight: 500;
+            display: block;
+            overflow: hidden;
+            max-width: 100%;
+        }
+        .entry-item-type {
+            font-weight: 700;
+            display: block;
+            overflow: hidden;
+            max-width: 100%;
+        }
+        .entry-item-value {
+            font-weight: 700;
+            display: block;
+            overflow: hidden;
+            max-width: 100%;
+        }
+        .entry-item.color-blue { /* background-color: #d0e9ff; color: #1890ff; */ }
+        .entry-item.color-red { /* background-color: #ffd6d5; color: #ff4d4f; */ }
+        .entry-item.color-green { /* background-color: #e3f9d1; color: #52c41a; */ }
+        .entry-item.color-yellow { /* background-color: #fff4d2; color: #faad14; */ }
+        .entry-item.color-purple { /* background-color: #eadaff; color: #722ed1; */ }
+        .entry-item.color-orange { /* background-color: #ffe7d2; color: #fa8c16; */ }
+        .entry-item .entry-item-name, .entry-item .entry-item-value { color: inherit; }
+        .entry-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 18px;
+            height: 18px;
+            background-color: #ff4d4f;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            pointer-events: none;
+            z-index: 99999;
+        }
+        .day-box {
+            position: relative;
+            overflow: visible !important;
+        }
+        .footer-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 1px dashed #e0e0e0;
+        }
+        .statement-text {
+            text-align: right;
+            font-size: 0.9rem;
+            color: #888;
+        }
+        @keyframes flash-glow {
+            0%, 100% { color: #f9f0ff; text-shadow: 0 0 8px #f9f0ff, 0 0 16px #f9f0ff, 0 0 24px #f9f0ff; }
+            20% { color: #ffeb3b; text-shadow: 0 0 8px #ffeb3b, 0 0 16px #ffeb3b, 0 0 24px #ffeb3b; }
+            40% { color: #8bc34a; text-shadow: 0 0 8px #8bc34a, 0 0 16px #8bc34a, 0 0 24px #8bc34a; }
+            60% { color: #2196f3; text-shadow: 0 0 8px #2196f3, 0 0 16px #2196f3, 0 0 24px #2196f3; }
+            80% { color: #ff5722; text-shadow: 0 0 8px #ff5722, 0 0 16px #ff5722, 0 0 24px #ff5722; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        .calendar-app.light-text-theme h1,
+        .calendar-app.light-text-theme .current-time,
+        .calendar-app.light-text-theme .month-navigation h2,
+        .calendar-app.light-text-theme .day-header,
+        .calendar-app.light-text-theme .author-name,
+        .calendar-app.light-text-theme .statement-text {
+            color: #f8f9fa;
+        }
+        .calendar-app.light-text-theme .day-box.is-today .day-number {
+            color: #ffc107;
+        }
+        /* [修改] 修复日历浅色主题下的日期颜色 */
+        .calendar-app.light-text-theme .day-number {
+            color: #4f5b66;
+        }
+        .calendar-app.light-text-theme .day-box.is-today .day-number {
+            color: #ffc107; /* 今天的日期保持高亮 */
+        }
+        .calendar-app.light-text-theme .day-box.other-month {
+            color: #aaa; /* 浅色主题下的非本月日期 */
+        }
+
+
+        .modal-dialog.shake {
+             animation: shake 0.5s ease-in-out;
+        }
+        .modal-dialog { transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1); }
+        .modal.fade:not(.show) .modal-dialog { transform: scale(0.6); }
+        .modal.fade.show .modal-dialog { transform: scale(1); }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .modal-content {
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: background-color 0.1s ease;
+        }
+        /* 恢复 X 关闭按钮 */
+        #entryModal .modal-header, #confirmModal .modal-header, #summaryModal .modal-header, #exportModal .modal-header, #dayDetailModal .modal-header, #pasteModal .modal-header, #infoModal .modal-header, #clearConfirmModal .modal-header, #exportChoiceModal .modal-header, #copySuccessModal .modal-header, #importChoiceModal .modal-header, #infoAlertModal .modal-header, #manualCopyModal .modal-header, #chartModal .modal-header, #tokenAnalysisModal .modal-header {
+            border-bottom: none;
+            padding: 20px 25px 0;
+        }
+        #entryModal .modal-title, #confirmModal .modal-title, #summaryModal .modal-title, #exportModal .modal-title, #dayDetailModal .modal-title, #pasteModal .modal-title, #infoModal .modal-title, #clearConfirmModal .modal-title, #exportChoiceModal .modal-title, #copySuccessModal .modal-title, #importChoiceModal .modal-title, #infoAlertModal .modal-title, #manualCopyModal .modal-title, #chartModal .modal-title, #tokenAnalysisModal .modal-title {
+            font-weight: 700;
+            color: #333;
+            font-size: 1.5rem;
+        }
+        #confirmModal .modal-title, #exportModal .modal-title, #pasteModal .modal-title, #infoModal .modal-title, #clearConfirmModal .modal-title, #exportChoiceModal .modal-title, #copySuccessModal .modal-title, #importChoiceModal .modal-title, #infoAlertModal .modal-title, #manualCopyModal .modal-title, #chartModal .modal-title, #tokenAnalysisModal .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        #entryModal .modal-body, #confirmModal .modal-body, #summaryModal .modal-body, #exportModal .modal-body, #dayDetailModal .modal-body, #pasteModal .modal-body, #infoModal .modal-body, #clearConfirmModal .modal-body, #exportChoiceModal .modal-body, #copySuccessModal .modal-body, #importChoiceModal .modal-body, #infoAlertModal .modal-body, #manualCopyModal .modal-body, #chartModal .modal-body, #tokenAnalysisModal .modal-body {
+            padding: 20px 25px;
+        }
+        #entryModal .modal-footer, #confirmModal .modal-footer, #summaryModal .modal-footer, #exportModal .modal-footer, #dayDetailModal .modal-footer, #pasteModal .modal-footer, #infoModal .modal-footer, #clearConfirmModal .modal-footer, #exportChoiceModal .modal-footer, #copySuccessModal .modal-footer, #importChoiceModal .modal-footer, #infoAlertModal .modal-footer, #manualCopyModal .modal-footer, #chartModal .modal-footer, #tokenAnalysisModal .modal-footer {
+            border-top: none;
+            padding: 0 25px 20px;
+        }
+        #entryModal .form-label, #pasteModal .form-label {
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 6px;
+        }
+        #entryModal .form-control, #pasteModal .form-control, #manualCopyModal .form-control, #viewDataModal .form-control { /* [修改] 统一导出模态框中的表单样式 */
+            border-radius: 12px;
+            padding: 12px 15px;
+            border: 1px solid rgba(220, 220, 220, 0.6);
+            background-color: rgba(255, 255, 255, 0.7);
+            transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+        }
+        #entryModal .form-control:focus, #pasteModal .form-control:focus, #manualCopyModal .form-control:focus, #viewDataModal .form-control:focus { /* [修改] 统一导出模态框中的表单样式 */
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+            background-color: rgba(255, 255, 255, 0.9);
+            outline: none;
+        }
+        .btn-glass {
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+            border-radius: 14px;
+            padding: 10px 20px;
+            transition: all 0.2s ease, transform 0.2s ease;
+        }
+        .btn-glass:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+        .btn-glass.btn-secondary { background-color: rgba(255, 255, 255, 0.4); color: #333; }
+        .btn-glass.btn-secondary:hover { background-color: rgba(255, 255, 255, 0.6); }
+        .btn-glass.btn-primary { background-color: rgba(0, 123, 255, 0.6); color: white; }
+        .btn-glass.btn-primary:hover { background-color: rgba(0, 123, 255, 0.8); box-shadow: 0 6px 20px rgba(0, 123, 255, 0.2); }
+        .btn-glass.btn-danger { background-color: rgba(220, 53, 69, 0.7); color: white; }
+        .btn-glass.btn-danger:hover { background-color: rgba(220, 53, 69, 0.9); box-shadow: 0 6px 20px rgba(220, 53, 69, 0.3); }
+        /* [新增] 导入文件按钮的样式 */
+        .btn-glass.btn-info { background-color: rgba(13, 202, 240, 0.6); color: white; }
+        .btn-glass.btn-info:hover { background-color: rgba(13, 202, 240, 0.8); box-shadow: 0 6px 20px rgba(13, 202, 240, 0.2); }
+        /* [新增] K线图按钮的样式 */
+        .btn-glass.btn-success { background-color: rgba(25, 135, 84, 0.6); color: white; }
+        .btn-glass.btn-success:hover { background-color: rgba(25, 135, 84, 0.8); box-shadow: 0 6px 20px rgba(25, 135, 84, 0.2); }
+
+
+        .summary-list-item.color-blue, #dayDetailModal .list-group-item.color-blue { border-left: 4px solid #1890ff; }
+        .summary-list-item.color-red, #dayDetailModal .list-group-item.color-red { border-left: 4px solid #ff4d4f; }
+        .summary-list-item.color-green, #dayDetailModal .list-group-item.color-green { border-left: 4px solid #52c41a; }
+        .summary-list-item.color-yellow, #dayDetailModal .list-group-item.color-yellow { border-left: 4px solid #faad14; }
+        .summary-list-item.color-purple, #dayDetailModal .list-group-item.color-purple { border-left: 4px solid #722ed1; }
+        .summary-list-item.color-orange, #dayDetailModal .list-group-item.color-orange { border-left: 4px solid #fa8c16; }
+
+        .summary-no-data { text-align: center; color: #6c757d; font-size: 1.1rem; padding: 20px; }
+        .summary-modal-scroll { max-height: 70vh; overflow-y: auto; padding-right: 10px; }
+        .summary-list-item {
+            background-color: #f8f9fa; border: 1px solid #e2e6ea; border-radius: 12px; padding: 12px 15px; margin-bottom: 10px;
+            display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: border-left-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer;
+        }
+        .summary-list-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .summary-list-item:last-child { margin-bottom: 0; }
+        .summary-list-item p { margin-bottom: 4px; font-size: 0.95rem; color: #495057; }
+        .date-header { font-weight: 700; font-size: 1.1rem; color: #007bff; margin-bottom: 8px; border-bottom: 1px dashed #ced4da; padding-bottom: 5px; margin-top: 20px; }
+        .summary-list-item .entry-detail { margin-left: 10px; color: #6c757d; }
+        .summary-list-item .entry-detail .value { font-weight: 600; color: #28a745; }
+        /* 颜色选择器已移除，颜色自动根据类型分配 */
+        #dayDetailModal .list-group-item { cursor: pointer; transition: background-color 0.2s ease, transform 0.2s ease; border-radius: 12px !important; margin-bottom: 8px; border: 1px solid #e2e6ea; padding-left: 1.25rem; }
+        #dayDetailModal .list-group-item:hover { background-color: #f8f9fa; transform: translateY(-2px); }
+        #dayDetailModal .list-group-item:last-child { margin-bottom: 0; }
+        #dayDetailModal .item-project-name { font-weight: 600; }
+        #dayDetailModal .item-value { font-weight: 500; color: #28a745; }
+
+        .wallpaper-options {
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 25px auto 0 auto;
+            flex-wrap: wrap; /* 增加响应式支持 */
+        }
+        .custom-file-upload {
+            display: inline-block; cursor: pointer; background: #007bff; color: white;
+            padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; transition: background-color 0.2s, transform 0.2s;
+        }
+        .custom-file-upload:hover { background-color: #0056b3; transform: translateY(-2px); }
+        .blur-toggle-switch { display: flex; align-items: center; gap: 8px; color: #333; font-size: 0.9rem; font-weight: 500; }
+        .blur-toggle-switch .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .blur-toggle-switch .switch input { opacity: 0; width: 0; height: 0; }
+        .blur-toggle-switch .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .blur-toggle-switch .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        .blur-toggle-switch input:checked + .slider { background-color: #2196F3; }
+        .blur-toggle-switch input:checked + .slider:before { transform: translateX(20px); }
+
+        .default-wallpapers { display: flex; gap: 10px; border-left: 1px solid #ddd; padding-left: 15px; margin-left: 5px;}
+        .color-swatch { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid rgba(0,0,0,0.1); transition: transform 0.2s ease; }
+        .color-swatch:hover { transform: scale(1.1); }
+        /* [修改] 确保自定义壁纸缩略图在被选中时能正确显示 */
+        .color-swatch#custom-wallpaper-swatch {
+            background-size: cover !important;
+            background-position: center !important;
+            border: 2px solid #007bff !important;
+        }
+
+        @media (max-width: 767.98px) {
+            body { padding: 10px; }
+            .calendar-app { padding: 15px; border-radius: 16px; }
+            h1 { font-size: 1.8rem; margin-bottom: 20px; }
+            .current-time { top: 20px; right: 15px; font-size: 0.8rem; }
+            .header-controls { flex-direction: column; margin-bottom: 15px; }
+            .month-navigation { width: 100%; justify-content: space-between; margin-bottom: 0px; }
+            .month-navigation h2 { font-size: 1.5rem; min-width: 150px; text-align: center; }
+            .month-navigation .btn { padding: 8px 12px; font-size: 0.9rem; border-radius: 12px; }
+            .summary-actions { width: 100%; align-items: stretch; margin-top: 20px;}
+            .card-total-summary { font-size: 1rem; }
+            .action-buttons { flex-direction: row; justify-content: space-between; }
+            .summary-actions .btn-export { flex-grow: 1; margin-right: 10px; }
+            .day-header-row { gap: 5px; margin-bottom: 5px; font-size: 0.9rem; }
+            .calendar-grid { gap: 5px; }
+            .day-box { height: 85px; padding: 5px; border-radius: 12px; } /* Adjusted height for mobile */
+            .day-number { font-size: 1.0rem; margin-bottom: 2px; }
+            .entry-item { font-size: 0.55rem; padding: 1px 3px; line-height: 1.1; }
+            .entry-badge { top: -5px; right: -5px; width: 20px; height: 20px; font-size: 0.65rem; }
+            .footer-info { flex-direction: column; align-items: center; text-align: center; gap: 15px; }
+            .author-name { text-align: center; font-size: 1.5rem;}
+            .statement-text { text-align: center; }
+            .wallpaper-options { flex-wrap: wrap; margin-top: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="calendar-app" id="calendarAppContainer">
+        <div id="currentTime" class="current-time"></div>
+        <h1>空投收益日历</h1>
+        <div class="header-controls">
+            <div class="month-navigation">
+                <button class="btn" id="prevMonthBtn"><i class="fas fa-chevron-left"></i></button>
+                <h2 id="currentMonthYear"></h2>
+                <button class="btn" id="nextMonthBtn"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+        <div class="day-header-row">
+            <div class="day-header">日</div> <div class="day-header">一</div> <div class="day-header">二</div> <div class="day-header">三</div>
+            <div class="day-header">四</div> <div class="day-header">五</div> <div class="day-header">六</div>
+        </div>
+        <div class="calendar-wrapper" id="calendarWrapper"></div>
+
+        <div class="summary-actions">
+            <div class="action-buttons">
+                <button class="btn btn-export" data-bs-toggle="modal" data-bs-target="#exportOptionsModal"><i class="fas fa-file-arrow-up-down me-2"></i> 导入/导出</button>
+                <button class="btn btn-clear" data-bs-toggle="modal" data-bs-target="#clearConfirmModal"><i class="fas fa-trash-can me-2"></i> 清空日历</button>
+            </div>
+            <div class="card-total-summary" data-bs-toggle="modal" data-bs-target="#summaryModal">
+                本月净收益: <span id="monthlyTotal">--</span>
+            </div>
+        </div>
+
+        <div class="wallpaper-options">
+            <label class="custom-file-upload">
+                自定义
+                <input type="file" id="customWallpaperInput" accept="image/*" style="display:none;">
+            </label>
+            <div class="blur-toggle-switch">
+                <span>模糊</span>
+                <label class="switch">
+                    <input type="checkbox" id="wallpaperBlurToggle">
+                    <span class="slider"></span>
+                </label>
+                <span>原画</span>
+            </div>
+            <div class="default-wallpapers">
+                <div class="color-swatch" id="custom-wallpaper-swatch" style="display: none; background-size: cover;"></div>
+                <div class="color-swatch" data-color="#f5f7fa" style="background-color: #f5f7fa;"></div>
+                <div class="color-swatch" data-color="#2c3e50" style="background-color: #2c3e50;"></div>
+                <div class="color-swatch" data-color="#3498db" style="background-color: #3498db;"></div>
+                <div class="color-swatch" data-color="#e74c3c" style="background-color: #e74c3c;"></div>
+                <div class="color-swatch" data-color="#1abc9c" style="background-color: #1abc9c;"></div>
+            </div>
+            </div>
+
+        <div class="footer-info">
+            <div class="author-name">开发者：赵铁柱</div>
+            <div class="statement-text">本工具仅用于个人记录，不构成任何投资建议。</div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="entryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加/编辑空投记录</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="entryDate"><input type="hidden" id="entryIndex">
+                    <input type="hidden" id="entryMode" value="airdrop">
+
+                    <div class="mb-3 d-flex justify-content-center">
+                        <button class="btn btn-primary btn-sm me-2 entry-type-btn" data-type="airdrop" id="airdropTypeBtn"><i class="fas fa-sack-dollar me-2"></i>￥空投</button>
+                        <button class="btn btn-secondary btn-sm entry-type-btn" data-type="fastExpense" id="fastLossTypeBtn"><i class="fas fa-hand-holding-dollar me-2"></i> 磨损</button>
+                    </div>
+
+                    <div class="mb-3" id="airdropSubtypeContainer" style="display: none;">
+                        <label class="form-label">空投子类型</label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <button class="btn btn-outline-primary btn-sm w-100 subtype-btn active" data-subtype="airdrop" data-color="blue" style="background-color: rgba(13, 110, 253, 0.1); border-color: #0d6efd; color: #0d6efd;">
+                                    <i class="fas fa-parachute-box me-1"></i> 空投
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-outline-secondary btn-sm w-100 subtype-btn" data-subtype="tge" data-color="purple" style="border-color: #7b1fa2; color: #7b1fa2;">
+                                    <i class="fas fa-rocket me-1"></i> TGE
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-outline-secondary btn-sm w-100 subtype-btn" data-subtype="trading" data-color="orange" style="border-color: #f57c00; color: #f57c00;">
+                                    <i class="fas fa-trophy me-1"></i> 交易赛
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-outline-secondary btn-sm w-100 subtype-btn" data-subtype="booster" data-color="green" style="border-color: #388e3c; color: #388e3c;">
+                                    <i class="fas fa-bolt me-1"></i> Booster
+                                </button>
+                            </div>
+                        </div>
+                        <input type="hidden" id="selectedSubtype" value="airdrop">
+                        <input type="hidden" id="selectedColor" value="blue">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="projectName" class="form-label" id="projectNameLabel">项目名称</label>
+                        <input type="text" class="form-control" id="projectName" placeholder="例如：LayerZero">
+                    </div>
+                    <div class="mb-3">
+                        <label for="tokenQuantity" class="form-label" id="tokenQuantityLabel">代币数量</label>
+                        <input type="number" inputmode="decimal" class="form-control" id="tokenQuantity" placeholder="例如：500" step="any">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="estimatedValue" class="form-label" id="valueLabel">价值 (USD)</label>
+                        <input type="number" inputmode="decimal" class="form-control" id="estimatedValue" placeholder="例如：50" step="any">
+                    </div>
+                    
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-glass" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger btn-glass" id="deleteEntryBtn" style="display:none;">删除</button>
+                    <button type="button" class="btn btn-primary btn-glass" id="saveEntryBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">确定要删除这条记录吗？</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center"></div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary btn-glass" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger btn-glass" id="confirmDeleteBtn">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="summaryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">本月所有记录</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body summary-modal-scroll" id="summaryModalBody">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="exportOptionsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">选择操作</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-grid gap-3">
+                        <button class="btn btn-glass btn-primary" data-bs-toggle="modal" data-bs-target="#viewDataModal">
+                            <i class="fas fa-file-export me-2"></i> 导出数据
+                        </button>
+                        
+                        <label class="btn btn-glass btn-info" for="importFileInput" style="cursor: pointer;">
+                            <i class="fas fa-file-upload me-2"></i> 从文件导入
+                        </label>
+                        <input type="file" id="importFileInput" accept=".json,application/json" style="display: none;">
+
+                        <button class="btn btn-glass btn-primary" data-bs-toggle="modal" data-bs-target="#importDataModal">
+                            <i class="fas fa-paste me-2"></i> 粘贴文本导入
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="viewDataModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">导出数据</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex gap-2 mb-3">
+                        <button class="btn btn-primary btn-glass" id="copyToClipboardBtn">
+                            <i class="fas fa-clipboard me-2"></i> 复制到剪贴板
+                        </button>
+                        <button class="btn btn-success btn-glass" id="downloadDataBtn">
+                            <i class="fas fa-download me-2"></i> 下载为文件
+                        </button>
+                    </div>
+                    <textarea class="form-control" id="viewDataArea" rows="10" readonly></textarea>
+                    
+                    <div class="mt-3">
+                        <label for="fallbackDownloadLink" class="form-label small text-muted">如果下载按钮无效，请复制此链接到浏览器中打开 (链接很长)：</label>
+                        <input type="text" class="form-control form-control-sm" id="fallbackDownloadLink" readonly onclick="this.select();" placeholder="将在此生成可复制的下载链接...">
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-glass" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="importDataModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">粘贴文本导入</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">请在下方文本框中粘贴要导入的数据：</p>
+                    <textarea class="form-control" id="importDataArea" rows="10" placeholder="在此粘贴要导入的数据..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-glass" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary btn-glass" id="importDataBtn">导入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="clearConfirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">⚠️ 确定要清空所有日历数据吗？</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center"><p class="mt-3">此操作不可逆，请确保您已备份数据。</p></div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary btn-glass" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger btn-glass" id="clearAllDataBtn">清空所有</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="dayDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary btn-glass" id="addEntryButton"><i class="fas fa-plus me-2"></i> 添加记录</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="copySuccessModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center"><h5 class="modal-title text-success"><i class="fas fa-check-circle me-2"></i> 复制成功！</h5></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="infoAlertModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="infoAlertTitle">提示</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="infoAlertMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-glass" data-bs-dismiss="modal">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">确认删除</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>确定要删除这条记录吗？</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-glass" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger btn-glass" id="confirmDeleteBtn">删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="chartModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">本月收益K线图 (累计净收益)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <canvas id="kLineChartCanvas" style="max-height: 400px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="tokenAnalysisModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">本月代币详情分析</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="tokenAnalysisModalBody" style="max-height: 70vh; overflow-y: auto;">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Data structure and initial state
+        let data = loadData();
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth();
+        let selectedDateKey = ''; // Used for entry modal
+        let modalSource = ''; // Track which modal opened the entry modal
+
+        // Bootstrap Modal Instances
+        const bsEntryModal = new bootstrap.Modal(document.getElementById('entryModal'));
+        const bsConfirmModal = new bootstrap.Modal(document.getElementById('confirmModal'), {
+            backdrop: 'static',
+            keyboard: false
+        });
+        const bsSummaryModal = new bootstrap.Modal(document.getElementById('summaryModal'));
+        const bsDayDetailModal = new bootstrap.Modal(document.getElementById('dayDetailModal'));
+
+
+        const bsExportOptionsModal = new bootstrap.Modal(document.getElementById('exportOptionsModal'));
+        const bsViewDataModal = new bootstrap.Modal(document.getElementById('viewDataModal'));
+        const bsImportDataModal = new bootstrap.Modal(document.getElementById('importDataModal'));
+        const bsClearConfirmModal = new bootstrap.Modal(document.getElementById('clearConfirmModal'));
+        const bsCopySuccessModal = new bootstrap.Modal(document.getElementById('copySuccessModal'));
+        const bsInfoAlertModal = new bootstrap.Modal(document.getElementById('infoAlertModal'));
+
+        // [新增] K线图和代币分析的模态框实例
+        const bsChartModal = new bootstrap.Modal(document.getElementById('chartModal'));
+        const bsTokenAnalysisModal = new bootstrap.Modal(document.getElementById('tokenAnalysisModal'));
+        let kLineChartInstance = null; // 用于存储 Chart.js 实例，以便销毁
+
+
+        // Handle entry modal close/cancel - return to previous modal with parallel animation
+        $('#entryModal .btn-close, #entryModal [data-bs-dismiss="modal"]').on('click', function() {
+            if (modalSource === 'dayDetail') {
+                const dateKey = $('#entryDate').val();
+                showDayDetailModal(dateKey); // Show immediately for parallel animation
+            } else if (modalSource === 'summary') {
+                bsSummaryModal.show(); // Show immediately for parallel animation
+            }
+            // 只有在不是删除操作时才重置modalSource
+            if (modalSource !== 'delete') {
+                modalSource = '';
+            }
+        });
+
+
+        // Helper Functions
+        function loadData() {
+            try {
+                const storedData = localStorage.getItem('airdropCalendarData');
+                return storedData ? JSON.parse(storedData) : {};
+            } catch (e) {
+                console.error("Error loading data from localStorage:", e);
+                return {};
+            }
+        }
+
+        function saveData(newData) {
+            data = newData;
+            localStorage.setItem('airdropCalendarData', JSON.stringify(data));
+        }
+
+        function formatCurrency(value) {
+            const num = parseFloat(value);
+            if (isNaN(num)) return '$0';
+            const sign = num < 0 ? '-' : '';
+            const absNum = Math.abs(num);
+            // Use Intl.NumberFormat for better formatting if supported, fallback to toFixed(2)
+            if (typeof Intl !== 'undefined' && Intl.NumberFormat) {
+                return `${sign}$${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(absNum)}`;
+            }
+            return `${sign}$${absNum.toFixed(2)}`;
+        }
+
+        function daysInMonth(year, month) {
+            return new Date(year, month + 1, 0).getDate();
+        }
+
+        function firstDayOfMonth(year, month) {
+            // Returns 0 for Sunday, 1 for Monday, ..., 6 for Saturday
+            return new Date(year, month, 1).getDay();
+        }
+
+        function getTodayKey() {
+            const today = new Date();
+            const y = today.getFullYear();
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const d = String(today.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function setSubtypeButtonStyle($btn, isActive) {
+            const color = $btn.data('color');
+            let style = {
+                'border-color': '',
+                'color': '',
+                'background-color': 'transparent'
+            };
+
+            switch(color) {
+                case 'blue':
+                    style['border-color'] = '#0d6efd';
+                    style['color'] = '#0d6efd';
+                    break;
+                case 'purple':
+                    style['border-color'] = '#7b1fa2';
+                    style['color'] = '#7b1fa2';
+                    break;
+                case 'orange':
+                    style['border-color'] = '#f57c00';
+                    style['color'] = '#f57c00';
+                    break;
+                case 'green':
+                    style['border-color'] = '#388e3c';
+                    style['color'] = '#388e3c';
+                    break;
+            }
+
+            if (isActive) {
+                switch(color) {
+                    case 'blue':
+                        style['background-color'] = 'rgba(13, 110, 253, 0.1)';
+                        break;
+                    case 'purple':
+                        style['background-color'] = 'rgba(123, 31, 162, 0.1)';
+                        break;
+                    case 'orange':
+                        style['background-color'] = 'rgba(245, 124, 0, 0.1)';
+                        break;
+                    case 'green':
+                        style['background-color'] = 'rgba(56, 142, 60, 0.1)';
+                        break;
+                }
+            }
+
+            $btn.css(style);
+        }
+
+        function activateSubtypeButton(subtype) {
+            $('.subtype-btn').each(function() {
+                const $btn = $(this);
+                const btnSubtype = $btn.data('subtype');
+                if (btnSubtype === subtype) {
+                    $btn.addClass('active');
+                    setSubtypeButtonStyle($btn, true);
+                    $('#selectedSubtype').val(btnSubtype);
+                    $('#selectedColor').val($btn.data('color'));
+                } else {
+                    $btn.removeClass('active');
+                    setSubtypeButtonStyle($btn, false);
+                }
+            });
+        }
+
+        /**
+         * [修改] 移除了 'actualExpense' (自动计算) 模式
+         * Updates the entry modal's UI based on the selected type (airdrop/fastExpense).
+         * @param {string} mode - 'airdrop' or 'fastExpense'.
+         */
+        function setEntryMode(mode) {
+            const $estimatedValue = $('#estimatedValue');
+            const $subtypeContainer = $('#airdropSubtypeContainer');
+            // [移除] const $expenseFields = $('#expenseBalanceFields');
+            const $tokenQuantityContainer = $('#tokenQuantity').closest('.mb-3');
+            const $projectNameLabel = $('#projectNameLabel');
+            const $valueLabel = $('#valueLabel');
+            const $projectName = $('#projectName');
+
+            $('#entryMode').val(mode);
+
+            // Toggle button styles
+            $('.entry-type-btn').removeClass('btn-primary btn-secondary').each(function() {
+                const btnMode = $(this).data('type');
+                $(this).addClass(btnMode === mode ? 'btn-primary' : 'btn-secondary');
+            });
+
+            // Reset UI state
+            $subtypeContainer.hide();
+            // [移除] $expenseFields.hide();
+            $estimatedValue.prop('readonly', false).attr('placeholder', '例如：50');
+            $tokenQuantityContainer.show(); // Default visibility
+            
+            // Set mode-specific UI
+            if (mode === 'airdrop') {
+                $subtypeContainer.show();
+                $projectNameLabel.text('代币名称');
+                $projectName.attr('placeholder', '例如：LayerZero'); // 确保 Placeholder 恢复
+                $('#tokenQuantityLabel').text('代币数量');
+                $valueLabel.html('价值 (USD) <span class="text-success fw-bold">(收益)</span>');
+                
+                const currentSubtype = $('#selectedSubtype').val();
+                if (currentSubtype) {
+                    activateSubtypeButton(currentSubtype);
+                } else {
+                    activateSubtypeButton('airdrop');
+                }
+            } else if (mode === 'fastExpense') {
+                $estimatedValue.prop('readonly', false).attr('placeholder', '例如：3.4');
+                $projectNameLabel.text('代币名称 (选填)');
+                $projectName.attr('placeholder', '例如：koge');
+                $('#tokenQuantityLabel').text('交易量 (选填)');
+                $valueLabel.html('磨损 (USD) <span class="text-danger fw-bold">(手动输入)</span>');
+            }
+        }
+
+
+        /**
+         * [修改] 移除了 'actualExpense' (自动计算) 模式
+         */
+        function openEntryModal(dateKey, entryIndex = null, entry = null) {
+            // Close the previous modal based on modalSource for parallel animation
+            if (modalSource === 'dayDetail') {
+                bsDayDetailModal.hide();
+            } else if (modalSource === 'summary') {
+                bsSummaryModal.hide();
+            }
+
+            const date = new Date(dateKey);
+            const dateText = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+            $('#entryDate').val(dateText);
+            $('#entryIndex').val(entryIndex !== null ? entryIndex : '');
+
+            let initialMode = 'airdrop';
+
+            // Clear fields first
+            $('#projectName').val('');
+            $('#tokenQuantity').val('');
+            $('#estimatedValue').val('');
+            // [移除] $('#balanceBefore').val('');
+            // [移除] $('#balanceAfter').val('');
+
+
+            if (entry) {
+                $('#entryModal .modal-title').text('编辑记录');
+                $('#projectName').val(entry.projectName);
+                $('#tokenQuantity').val(entry.tokenQuantity);
+
+                // Determine mode and set value
+                const value = parseFloat(entry.estimatedValue || 0); // This is the saved net value
+                const subtype = entry.subtype || 'airdrop';
+                
+                // [修改] 简化：所有负值或 'actualExpense' 都被视为 'fastExpense'
+                if (value < 0 || subtype === 'actualExpense' || subtype === 'fastExpense') {
+                    // Loss modes
+                    initialMode = 'fastExpense';
+                    // Fast expense: show the saved magnitude
+                    $('#estimatedValue').val(Math.abs(value).toFixed(2));
+                    
+                } else {
+                    // Profit mode
+                    initialMode = 'airdrop';
+                    $('#estimatedValue').val(value);
+                    activateSubtypeButton(subtype);
+                }
+
+                $('#deleteEntryBtn').show().data('date', dateText).data('index', entryIndex);
+            } else {
+                $('#entryModal .modal-title').text('添加新记录');
+                $('#deleteEntryBtn').hide();
+                activateSubtypeButton('airdrop');
+            }
+
+            // Set the mode
+            setEntryMode(initialMode);
+
+            bsEntryModal.show();
+        }
+
+        // --- Core Calendar Rendering ---
+        function renderCalendar() {
+            const numDays = daysInMonth(currentYear, currentMonth);
+            const firstDay = firstDayOfMonth(currentYear, currentMonth); // 0 (Sun) - 6 (Sat)
+            const todayKey = getTodayKey();
+            const currentMonthName = new Date(currentYear, currentMonth).toLocaleDateString('zh-CN', { month: 'long', year: 'numeric' });
+            $('#currentMonthYear').text(currentMonthName);
+
+            let html = '<div class="calendar-grid">';
+
+            // Calculate days for the previous month fill
+            const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+            const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+            const daysInPrevMonth = daysInMonth(prevYear, prevMonth);
+
+            // Previous month days
+            for (let i = 0; i < firstDay; i++) {
+                const day = daysInPrevMonth - firstDay + i + 1;
+                html += `<div class="day-box other-month">${day}</div>`;
+            }
+
+            // Current month days
+            for (let i = 1; i <= numDays; i++) {
+                const day = String(i).padStart(2, '0');
+                const month = String(currentMonth + 1).padStart(2, '0');
+                const dateKey = `${currentYear}-${month}-${day}`;
+                const dailyEntries = data[dateKey] || [];
+                const isToday = dateKey === todayKey;
+                const totalEntries = dailyEntries.length;
+
+                let dayContent = `<div class="day-number">${i}</div>`;
+
+                // --- NEW DISPLAY LOGIC ---
+                if (totalEntries > 0) {
+                    const entry = dailyEntries[0]; // ONLY process the first entry
+                    const value = parseFloat(entry.estimatedValue || 0);
+                    const isProfit = value >= 0;
+
+                    // Format value to integer (no decimal/unit)
+                    const displayValue = Math.round(Math.abs(value)); // Always show positive magnitude
+
+                    // Determine the type label based on subtype or value sign
+                    let typeLabel;
+                    let typeColor;
+                    if (isProfit) {
+                        switch(entry.subtype) {
+                            case 'airdrop':
+                                typeLabel = '空投';
+                                typeColor = '#1976d2';
+                                break;
+                            case 'tge':
+                                typeLabel = 'TGE';
+                                typeColor = '#7b1fa2';
+                                break;
+                            case 'trading':
+                                typeLabel = '交易赛';
+                                typeColor = '#f57c00';
+                                break;
+                            case 'booster':
+                                typeLabel = 'Booster';
+                                typeColor = '#388e3c';
+                                break;
+                            default:
+                                typeLabel = '收益';
+                                typeColor = '#28a745';
+                        }
+                    } else {
+                         // [修改] 简化磨损标签
+                        typeLabel = '磨损';
+                        typeColor = '#dc3545';
+                    }
+
+                    // Truncate project name to first 4 characters
+                    const projectName = entry.projectName ? entry.projectName : (isProfit ? '' : '');
+                    const truncatedName = projectName.substring(0, 4);
+                    // Truncate display value to first 4 digits
+                    const truncatedValue = displayValue.toString().substring(0, 4);
+
+                    dayContent += `
+                        <p class="entry-item mb-0">
+                            <span class="entry-item-name fw-bold">${truncatedName}</span>
+                        </p>
+                        <p class="entry-item my-0">
+                            <span class="entry-item-type" style="color: ${typeColor}; font-weight: 700;">
+                                ${typeLabel}
+                            </span>
+                        </p>
+                        <p class="entry-item mt-0">
+                            <span class="entry-item-value" style="color: ${typeColor}; font-weight: 700;">
+                                ${truncatedValue}
+                            </span>
+                        </p>
+                    `;
+                }
+
+                // Append the main content
+                html += `<div class="day-box ${isToday ? 'is-today' : ''} ${dailyEntries.length > 0 ? 'has-data' : ''}" data-date="${dateKey}" data-day="${i}">`;
+                html += dayContent;
+
+                // Add entry badge if more than 1 entry (totalEntries - 1 extra)
+                if (totalEntries > 1) {
+                    const extraCount = totalEntries - 1;
+                    html += `<div class="entry-badge">+${extraCount}</div>`;
+                }
+
+                html += '</div>';
+            }
+
+            // Calculate height and append the grid
+            const rows = Math.ceil((firstDay + numDays) / 7);
+            const wrapperHeight = (rows * 85) + ((rows - 1) * 5); // 进一步减小格子高度和间距
+            $('#calendarWrapper').css('height', `${wrapperHeight}px`).html(html);
+
+            // [修改] 移除了自动弹出未完成条目的逻辑
+            // Add click event for day boxes
+            $('.day-box:not(.other-month)').off('click').on('click', function() {
+                const dateKey = $(this).data('date');
+                
+                // Show day detail modal
+                showDayDetailModal(dateKey);
+            });
+
+
+            // Update monthly total and summary breakdown
+            updateMonthlyTotal();
+        }
+
+        // --- Core Total Calculation (Modified for Net, Profit, Expense) ---
+        function updateMonthlyTotal() {
+            let monthlyProfit = 0;
+            let monthlyExpense = 0; // Stored as a negative value
+
+            const currentMonthData = {};
+            Object.keys(data).forEach(dateKey => {
+                const date = new Date(dateKey);
+                if (date.getFullYear() === currentYear && date.getMonth() === currentMonth) {
+                    currentMonthData[dateKey] = data[dateKey];
+                }
+            });
+
+            Object.keys(currentMonthData).forEach(date => {
+                currentMonthData[date].forEach(entry => {
+                    const value = parseFloat(entry.estimatedValue || 0);
+                    if (!isNaN(value)) {
+                         if (value > 0) {
+                            monthlyProfit += value;
+                        } else {
+                            monthlyExpense += value; // monthlyExpense is negative or zero
+                        }
+                    }
+                });
+            });
+
+            const monthlyNet = monthlyProfit + monthlyExpense;
+
+            // Update main card text
+            $('#monthlyTotal').text(formatCurrency(monthlyNet));
+
+            // Store breakdown for summary modal
+            $('#monthlyTotal').data('net', monthlyNet);
+            $('#monthlyTotal').data('profit', monthlyProfit);
+            $('#monthlyTotal').data('expense', monthlyExpense);
+        }
+
+        // Day Detail Modal
+        function showDayDetailModal(dateKey) {
+            const entries = data[dateKey] || [];
+            const date = new Date(dateKey);
+            const dateText = `${date.getMonth() + 1}月${date.getDate()}日`;
+
+            let dailyNet = 0;
+            let dailyProfit = 0;
+            let dailyExpense = 0; // Stored as a positive value for display
+
+            entries.forEach(entry => {
+                const value = parseFloat(entry.estimatedValue || 0);
+                if (!isNaN(value)) {
+                    dailyNet += value;
+                    if (value > 0) {
+                        dailyProfit += value;
+                    } else {
+                        dailyExpense += Math.abs(value); // Keep as positive for display
+                    }
+                }
+            });
+
+            // HTML for stats summary block
+            const statsHtml = `
+                <div class="card p-3 mb-3 rounded-3 shadow-sm" style="background-color: rgba(255, 255, 255, 0.8);">
+                    <h6 class="text-center mb-3 fw-bold text-primary">${dateText} 统计</h6>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-success fw-bold"><i class="fas fa-arrow-up me-2"></i> 总收益 (空投)</span>
+                        <span class="fw-bold text-success">${formatCurrency(dailyProfit)}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-danger fw-bold"><i class="fas fa-arrow-down me-2"></i> 总磨损 (支出)</span>
+                        <span class="fw-bold text-danger">${formatCurrency(dailyExpense)}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2">
+                        <span class="fw-bold">当日净额</span>
+                        <span class="fs-5 fw-bolder" style="color: ${dailyNet >= 0 ? '#28a745' : '#dc3545'};">${formatCurrency(dailyNet)}</span>
+                    </div>
+                </div>
+            `;
+
+            let listHtml = '';
+
+            if (entries.length === 0) {
+                listHtml = '<li class="list-group-item text-center text-muted">当日无记录。</li>';
+            } else {
+                entries.forEach((entry, index) => {
+                    const value = parseFloat(entry.estimatedValue || 0);
+                    const isProfit = value >= 0;
+
+                    // 根据细分类型确定标签和颜色
+                    let typeLabel, bgColor, textColor;
+                    if (isProfit) {
+                        const subtype = entry.subtype || 'airdrop';
+                        switch(subtype) {
+                            case 'tge':
+                                typeLabel = 'TGE';
+                                bgColor = '#f3e5f5';
+                                textColor = '#7b1fa2';
+                                break;
+                            case 'trading':
+                                typeLabel = '交易赛';
+                                bgColor = '#fff3e0';
+                                textColor = '#f57c00';
+                                break;
+                            case 'booster':
+                                typeLabel = 'Booster';
+                                bgColor = '#e8f5e8';
+                                textColor = '#388e3c';
+                                break;
+                            default: // airdrop
+                                typeLabel = '空投';
+                                bgColor = '#e3f2fd';
+                                textColor = '#1976d2';
+                        }
+                    } else {
+                        // [修改] 简化磨损标签
+                        typeLabel = '磨损';
+                        bgColor = '#ffebee';
+                        textColor = '#d32f2f';
+                    }
+
+                    const tokenLabel = (isProfit || entry.tokenQuantity) ? entry.tokenQuantity : '';
+
+                    listHtml += `
+                        <li class="list-group-item color-${entry.color} d-flex justify-content-between align-items-center" data-date="${dateKey}" data-index="${index}">
+                            <div>
+                                <span class="item-project-name">${entry.projectName || typeLabel}</span>
+                                <p class="text-muted small mb-0">
+                                    <span class="badge" style="background-color: ${bgColor}; color: ${textColor}; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin-right: 6px;">
+                                        ${typeLabel}
+                                    </span>
+                                    ${tokenLabel}
+                                </p>
+                            </div>
+                            <span class="item-value" style="color: ${isProfit ? '#28a745' : '#dc3545'};">
+                                ${isProfit ? '+' : ''}${formatCurrency(value)}
+                            </span>
+                        </li>
+                    `;
+                });
+            }
+
+            // Combine stats and list
+            const modalBodyContent = statsHtml + `<ul class="list-group list-group-flush">${listHtml}</ul>`;
+
+            $('#dayDetailModal .modal-title').text(`${dateText} 记录`);
+            $('#dayDetailModal .modal-body').html(modalBodyContent);
+            $('#addEntryButton').data('date', dateKey); // Set date for Add button
+
+            // Add click handler to list items for editing
+            $('#dayDetailModal .list-group-item').on('click', function() {
+                const index = $(this).data('index');
+                if (index !== undefined) {
+                    modalSource = 'dayDetail';
+                    openEntryModal(dateKey, index, entries[index]); // Show immediately for parallel animation
+                }
+            });
+
+            bsDayDetailModal.show();
+        }
+
+
+        // [修改] Summary Modal - 移除长截图按钮
+        function renderSummaryModal() {
+            const $monthlyTotalSpan = $('#monthlyTotal');
+            const monthlyNet = $monthlyTotalSpan.data('net') || 0;
+            const monthlyProfit = $monthlyTotalSpan.data('profit') || 0;
+            const monthlyExpense = $monthlyTotalSpan.data('expense') || 0; // This is negative/zero
+
+            // [修改] 功能按钮容器, 移除长截图
+            let html = `
+                <div class="d-flex justify-content-start flex-wrap gap-2 mb-3 border-bottom pb-3">
+                    <button class="btn btn-sm btn-glass btn-success" id="showKLineChartBtn" onclick="showKLineChart()">
+                        <i class="fas fa-chart-line me-1"></i> 收益K线图
+                    </button>
+                    <button class="btn btn-sm btn-glass btn-info" id="showTokenAnalysisBtn" onclick="showTokenAnalysis()">
+                        <i class="fas fa-coins me-1"></i> 代币详情分析
+                    </button>
+                </div>
+            `;
+
+
+            if (monthlyProfit === 0 && monthlyExpense === 0) {
+                 html += '<div class="summary-no-data">本月暂无记录</div>';
+                 $('#summaryModalBody').html(html);
+                 return;
+            }
+
+            // Breakdown Summary
+            html += `
+                <div class="card p-3 mb-4 rounded-3 shadow-sm bg-light">
+                    <h6 class="text-center mb-3 fw-bold text-primary">本月财务统计</h6>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-success fw-bold"><i class="fas fa-arrow-up me-2"></i> 总收益 (空投)</span>
+                        <span class="fs-5 text-success">${formatCurrency(monthlyProfit)}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                        <span class="text-danger fw-bold"><i class="fas fa-arrow-down me-2"></i> 总磨损 (支出)</span>
+                        <span class="fs-5 text-danger">${formatCurrency(Math.abs(monthlyExpense))}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold fs-6">本月净收益</span>
+                        <span class="fs-4 fw-bolder" style="color: ${monthlyNet >= 0 ? '#28a745' : '#dc3545'};">${formatCurrency(monthlyNet)}</span>
+                    </div>
+                </div>
+            `;
+
+            // List of all entries
+            const dateKeys = Object.keys(data).sort((a, b) => new Date(b) - new Date(a));
+
+            dateKeys.forEach(dateKey => {
+                const date = new Date(dateKey);
+                // Filter entries for the current displayed month
+                if (date.getFullYear() === currentYear && date.getMonth() === currentMonth) {
+                    const dailyEntries = data[dateKey];
+                    if (dailyEntries && dailyEntries.length > 0) {
+                        const dateText = `${date.getMonth() + 1}月${date.getDate()}日`;
+                        html += `<div class="date-header">${dateText}</div>`;
+
+                        dailyEntries.forEach((entry, index) => {
+                            const value = parseFloat(entry.estimatedValue || 0);
+                            const isProfit = value >= 0;
+
+                            // 根据细分类型确定标签和颜色
+                            let typeLabel, bgColor, textColor;
+                            if (isProfit) {
+                                const subtype = entry.subtype || 'airdrop';
+                                switch(subtype) {
+                                    case 'tge':
+                                        typeLabel = 'TGE';
+                                        bgColor = '#f3e5f5';
+                                        textColor = '#7b1fa2';
+                                        break;
+                                    case 'trading':
+                                        typeLabel = '交易赛';
+                                        bgColor = '#fff3e0';
+                                        textColor = '#f57c00';
+                                        break;
+                                    case 'booster':
+                                        typeLabel = 'Booster';
+                                        bgColor = '#e8f5e8';
+                                        textColor = '#388e3c';
+                                        break;
+                                    default: // airdrop
+                                        typeLabel = '空投';
+                                        bgColor = '#e3f2fd';
+                                        textColor = '#1976d2';
+                                }
+                            } else {
+                                // [修改] 简化磨损标签
+                                typeLabel = '磨损';
+                                bgColor = '#ffebee';
+                                textColor = '#d32f2f';
+                            }
+
+                            const tokenLabel = (isProfit || entry.tokenQuantity) ? entry.tokenQuantity : '';
+                            const projectName = entry.projectName ? entry.projectName : typeLabel;
+
+
+                            html += `
+                                <div class="summary-list-item color-${entry.color}" data-date="${dateKey}" data-index="${index}">
+                                    <div class="d-flex justify-content-between">
+                                        <p class="mb-1">
+                                            <span class="item-project-name">${projectName}</span>
+                                        </p>
+                                        <p class="mb-1">
+                                            <span class="item-value" style="color: ${isProfit ? '#28a745' : '#dc3545'};">
+                                                ${isProfit ? '+' : ''}${formatCurrency(value)}
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <p class="text-muted small mb-0">
+                                        <span class="badge" style="background-color: ${bgColor}; color: ${textColor}; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin-right: 6px;">
+                                            ${typeLabel}
+                                        </span>
+                                        ${tokenLabel}
+                                    </p>
+                                </div>
+                            `;
+                        });
+                    }
+                }
+            });
+
+            $('#summaryModalBody').html(html);
+
+            // Add click handler for editing entries in the summary modal
+            $('#summaryModalBody .summary-list-item').off('click').on('click', function() {
+                const date = $(this).data('date');
+                const index = $(this).data('index');
+                const entry = data[date][index];
+                modalSource = 'summary';
+                openEntryModal(date, index, entry); // Show immediately for parallel animation
+            });
+        }
+
+
+        /**
+         * [新增] K线图 - 数据处理
+         */
+        function processDataForKLine() {
+            const labels = [];
+            const dataPoints = [];
+            let cumulativeProfit = 0;
+            
+            const numDays = daysInMonth(currentYear, currentMonth);
+            const monthStr = String(currentMonth + 1).padStart(2, '0');
+
+            for (let i = 1; i <= numDays; i++) {
+                const dayStr = String(i).padStart(2, '0');
+                const dateKey = `${currentYear}-${monthStr}-${dayStr}`;
+                labels.push(`${monthStr}-${dayStr}`); // e.g., "10-01"
+
+                let dailyNet = 0;
+                const entries = data[dateKey] || [];
+                entries.forEach(entry => {
+                    dailyNet += parseFloat(entry.estimatedValue || 0);
+                });
+                
+                cumulativeProfit += dailyNet;
+                dataPoints.push(cumulativeProfit.toFixed(2));
+            }
+            
+            return { labels, dataPoints };
+        }
+
+        /**
+         * [新增] K线图 - 渲染图表
+         */
+        function renderKLineChart(labels, dataPoints) {
+            const ctx = document.getElementById('kLineChartCanvas').getContext('2d');
+            
+            // 销毁旧实例
+            if (kLineChartInstance) {
+                kLineChartInstance.destroy();
+            }
+
+            kLineChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '累计净收益 (USD)',
+                        data: dataPoints,
+                        borderColor: 'rgba(0, 123, 255, 1)',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                // 格式化 Y 轴为 $
+                                callback: function(value, index, values) {
+                                    return formatCurrency(value);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += formatCurrency(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * [新增] K线图 - 显示模态框
+         */
+        function showKLineChart() {
+            try {
+                const { labels, dataPoints } = processDataForKLine();
+                renderKLineChart(labels, dataPoints);
+                bsSummaryModal.hide();
+                bsChartModal.show();
+            } catch (e) {
+                console.error("Error showing K-Line chart:", e);
+                showInfoAlert('生成图表失败！');
+            }
+        }
+
+        /**
+         * [新增] 代币分析 - 数据处理
+         */
+        function processDataForTokenAnalysis() {
+            const tokenSummary = {};
+            const monthStr = String(currentMonth + 1).padStart(2, '0');
+
+            Object.keys(data).forEach(dateKey => {
+                const date = new Date(dateKey);
+                if (date.getFullYear() === currentYear && date.getMonth() === currentMonth) {
+                    const entries = data[dateKey] || [];
+                    entries.forEach(entry => {
+                        // [修改] 磨损类条目如果没有填项目名称，则归类为 '常规磨损'
+                        const value = parseFloat(entry.estimatedValue || 0);
+                        let name;
+
+                        if (value < 0 && (!entry.projectName || entry.projectName.trim() === '')) {
+                            name = '常规磨损'; // 归类
+                        } else {
+                            name = (entry.projectName || '未指定项目').trim();
+                        }
+                        
+                        const lowerName = name.toLowerCase();
+
+                        if (!tokenSummary[lowerName]) {
+                            tokenSummary[lowerName] = { 
+                                displayName: name, // 保留第一次出现时的大小写
+                                netValue: 0,
+                                profit: 0,
+                                expense: 0, // 存负值
+                                count: 0
+                            };
+                        }
+
+                        tokenSummary[lowerName].netValue += value;
+                        tokenSummary[lowerName].count++;
+
+                        if (value > 0) {
+                            tokenSummary[lowerName].profit += value;
+                        } else if (value < 0) {
+                            tokenSummary[lowerName].expense += value; // 累加负值
+                        }
+                    });
+                }
+            });
+
+            // 转换并排序 (按净收益降序)
+            const summaryArray = Object.values(tokenSummary).sort((a, b) => b.netValue - a.netValue);
+            return summaryArray;
+        }
+
+        /**
+         * [新增] 代币分析 - 渲染HTML
+         */
+        function renderTokenAnalysis(analysisData) {
+            const $body = $('#tokenAnalysisModalBody');
+            if (!analysisData || analysisData.length === 0) {
+                $body.html('<p class="text-center text-muted">本月无数据可供分析。</p>');
+                return;
+            }
+
+            let html = '<ul class="list-group list-group-flush">';
+            
+            analysisData.forEach(item => {
+                const netColor = item.netValue > 0 ? 'text-success' : (item.netValue < 0 ? 'text-danger' : 'text-muted');
+                
+                html += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
+                        <div class="me-3 mb-2 mb-md-0">
+                            <h6 class="mb-0 fw-bold">${item.displayName}</h6>
+                            <small class="text-muted">共 ${item.count} 笔记录</small>
+                        </div>
+                        <div class="d-flex flex-column align-items-end" style="min-width: 150px;">
+                            <span class="fw-bolder fs-6 ${netColor}">${formatCurrency(item.netValue)}</span>
+                            <div>
+                                <small class="text-success me-2" title="总收益">+${formatCurrency(item.profit)}</small>
+                                <small class="text-danger" title="总支出">${formatCurrency(Math.abs(item.expense))}</small>
+                            </div>
+                        </div>
+                    </li>
+                `;
+            });
+            
+            html += '</ul>';
+            $body.html(html);
+        }
+
+        /**
+         * [新增] 代币分析 - 显示模态框
+         */
+        function showTokenAnalysis() {
+            try {
+                const analysisData = processDataForTokenAnalysis();
+                renderTokenAnalysis(analysisData);
+                bsSummaryModal.hide();
+                bsTokenAnalysisModal.show();
+            } catch (e) {
+                console.error("Error showing Token Analysis:", e);
+                showInfoAlert('生成分析数据失败！');
+            }
+        }
+
+
+        // --- Event Handlers ---
+
+        $(document).ready(function() {
+
+            // FIX: Call renderSummaryModal before the modal shows
+            $('#summaryModal').on('show.bs.modal', function () {
+                renderSummaryModal();
+            });
+
+            // [新增] 当K线图或代币分析模态框关闭时, 重新显示摘要模态框
+            $('#chartModal, #tokenAnalysisModal').on('hidden.bs.modal', function (e) {
+                // 检查 modalSource，确保不是因为打开 entryModal 而关闭的
+                // (entryModal 会设置 modalSource, 关闭时会清空)
+                if (modalSource === '') {
+                    bsSummaryModal.show();
+                }
+            });
+
+
+            // Navigation
+            $('#prevMonthBtn').on('click', function() {
+                currentMonth--;
+                if (currentMonth < 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                }
+                renderCalendar();
+            });
+
+            $('#nextMonthBtn').on('click', function() {
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+                renderCalendar();
+            });
+
+            // NEW: Entry Type Toggle Buttons (Updated to handle three modes)
+            $('.entry-type-btn').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const mode = $(this).data('type');
+                setEntryMode(mode);
+            });
+
+            // Airdrop Subtype Selection
+            // 初始化时激活默认按钮
+            activateSubtypeButton('airdrop');
+
+            // 点击子类型按钮
+            $('.subtype-btn').on('click', function() {
+                const subtype = $(this).data('subtype');
+                activateSubtypeButton(subtype);
+            });
+            
+            // [修改] 移除了 "自动计算" 的 'input' 事件
+
+            // Day Detail Modal - Add Entry Button
+            $('#addEntryButton').on('click', function() {
+                const dateKey = $(this).data('date');
+                modalSource = 'dayDetail';
+                openEntryModal(dateKey); // Will open in default 'airdrop' mode - parallel animation
+            });
+
+            /**
+             * [修改] 移除了 'actualExpense' (自动计算) 模式
+             * Save Entry
+             */
+            $('#saveEntryBtn').on('click', function() {
+                // Get all values
+                let projectName = $('#projectName').val().trim();
+                const tokenQuantity = $('#tokenQuantity').val().trim();
+                const estimatedValueInput = $('#estimatedValue').val().trim(); // Value from input (magnitude or profit)
+                const mode = $('#entryMode').val();
+                const dateKey = $('#entryDate').val();
+                const index = $('#entryIndex').val();
+                // [移除] balanceBefore 和 balanceAfter
+
+                // 1. Validation and Default Naming
+                if (mode === 'airdrop' && !projectName) {
+                    // Airdrop: Name required
+                    showInfoAlert('空投模式下，项目名称不能为空！');
+                    $('#entryModal .modal-dialog').addClass('shake');
+                    setTimeout(() => $('#entryModal .modal-dialog').removeClass('shake'), 500);
+                    return;
+                }
+
+                if (mode === 'airdrop' && !estimatedValueInput) {
+                    // Airdrop: Value required
+                    showInfoAlert('空投模式下，请填写价值 (收益)！');
+                    $('#entryModal .modal-dialog').addClass('shake');
+                    setTimeout(() => $('#entryModal .modal-dialog').removeClass('shake'), 500);
+                    return;
+                }
+
+                if (mode === 'fastExpense' && !estimatedValueInput) {
+                    // Fast Expense: Value required
+                    showInfoAlert('手动磨损模式下，请填写磨损值！');
+                    $('#entryModal .modal-dialog').addClass('shake');
+                    setTimeout(() => $('#entryModal .modal-dialog').removeClass('shake'), 500);
+                    return;
+                }
+                
+                // [移除] actualExpense 的验证
+
+                // 2. Mode-Specific Data Formatting
+                let value = 0;
+                let color;
+                let subtype;
+                // [移除] bB_save 和 bA_save
+                
+                if (estimatedValueInput && !isNaN(parseFloat(estimatedValueInput))) {
+                     value = parseFloat(estimatedValueInput);
+                }
+                
+                // [移除] actualExpense 的数据处理
+                
+                if (mode === 'fastExpense') {
+                    // Manual Expense
+                    value = -Math.abs(value); // Force negative (since it's manual loss)
+                    color = 'red';
+                    subtype = 'fastExpense';
+                    
+                } else {
+                    // Airdrop Mode
+                    value = Math.abs(value); // Force positive
+                    subtype = $('#selectedSubtype').val() || 'airdrop';
+
+                    // Set color based on subtype
+                    switch(subtype) {
+                        case 'tge': color = 'purple'; break;
+                        case 'trading': color = 'orange'; break;
+                        case 'booster': color = 'green'; break;
+                        default: color = 'blue';
+                    }
+                }
+                
+                // Final validation: check if numerical value is valid for saving
+                 if (isNaN(value)) {
+                    showInfoAlert('无法计算出有效的数值，请检查输入！');
+                    $('#entryModal .modal-dialog').addClass('shake');
+                    setTimeout(() => $('#entryModal .modal-dialog').removeClass('shake'), 500);
+                    return;
+                }
+
+                if (!data[dateKey]) {
+                    data[dateKey] = [];
+                }
+
+                const newEntry = {
+                    projectName: projectName,
+                    tokenQuantity: tokenQuantity || '',
+                    estimatedValue: value,
+                    color: color,
+                    subtype: subtype,
+                    // [移除] balanceBefore 和 balanceAfter
+                    balanceBefore: null,
+                    balanceAfter: null
+                };
+
+                if (index !== '') {
+                    // Edit existing entry
+                    data[dateKey][parseInt(index)] = newEntry;
+                } else {
+                    // Add new entry
+                    data[dateKey].push(newEntry);
+                }
+
+                saveData(data);
+                bsEntryModal.hide();
+                renderCalendar();
+
+                if (index === '') {
+                    modalSource = '';
+                }
+            });
+
+            // Delete Entry Confirmation
+            $('#deleteEntryBtn').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const dateKey = $('#entryDate').val();
+                const index = $('#entryIndex').val();
+                $('#confirmDeleteBtn').data('dateKey', dateKey).data('index', index);
+                modalSource = 'delete'; // 设置特殊的模态框来源
+                bsEntryModal.hide();
+                bsConfirmModal.show();
+            });
+
+            // Confirm Delete
+            $('#confirmDeleteBtn').on('click', function() {
+                const dateKey = $(this).data('dateKey');
+                const index = $(this).data('index');
+
+                if (data[dateKey] && index !== '') {
+                    data[dateKey].splice(parseInt(index), 1);
+                    if (data[dateKey].length === 0) {
+                        delete data[dateKey];
+                    }
+                    saveData(data);
+                    renderCalendar();
+                    bsConfirmModal.hide();
+                    showInfoAlert('记录删除成功！');
+                    modalSource = ''; // 重置模态框来源
+                }
+            });
+
+            // Export/Import Buttons
+            /**
+             * [修改]
+             */
+            function compressData(data) {
+                // 压缩数据格式
+                const d = {};
+                Object.keys(data).forEach(k => {
+                    if (Array.isArray(data[k]) && data[k].length > 0) {
+                        d[k] = data[k].map(e => {
+                            // 获取原始数据
+                            const entryData = {
+                                p: e.projectName,
+                                t: e.tokenQuantity,
+                                e: e.estimatedValue,
+                                c: e.color, // 压缩时直接使用保存的 color/subtype
+                                s: e.subtype
+                            };
+                            
+                            // [移除] 不再保存余额字段
+                            
+                            return entryData;
+                        });
+                    }
+                });
+                return JSON.stringify(d);
+            }
+
+            function decompressData(compressedString) {
+                // [修改] 导入时，将 'actualExpense' 转换为 'fastExpense'
+                try {
+                    const parsed = JSON.parse(compressedString);
+                    if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                        const result = {};
+                        Object.keys(parsed).forEach(date => {
+                            if (Array.isArray(parsed[date])) {
+                                result[date] = parsed[date].map(entry => {
+                                    const value = parseFloat(entry.e || entry.estimatedValue || 0);
+                                    let subtype = entry.s || entry.subtype;
+                                    let color = entry.c || entry.color;
+                                    const projectName = entry.p || entry.projectName;
+                                    const tokenQuantity = entry.t || entry.tokenQuantity;
+
+                                    // 兼容旧的只有 'expense' 或没有 subtype 的情况
+                                    if (!subtype) {
+                                        if (value < 0) {
+                                            // [修改] 默认所有旧负值为 fastExpense
+                                            subtype = 'fastExpense';
+                                        } else {
+                                            subtype = 'airdrop';
+                                        }
+                                    }
+                                    
+                                    // [修改] 将导入的 actualExpense 转换为 fastExpense
+                                    if (subtype === 'actualExpense') {
+                                        subtype = 'fastExpense';
+                                    }
+
+                                    // 兼容没有 color 的情况
+                                    if (!color) {
+                                        color = (value < 0) ? 'red' : 'blue';
+                                    }
+
+
+                                    return {
+                                        projectName: projectName,
+                                        tokenQuantity: tokenQuantity,
+                                        estimatedValue: value,
+                                        color: color,
+                                        subtype: subtype,
+                                        balanceBefore: null, // [修改] 丢弃导入的余额数据
+                                        balanceAfter: null
+                                    };
+                                });
+                            }
+                        });
+                        return result;
+                    }
+                } catch (e) {
+                    throw new Error("数据格式错误");
+                }
+                throw new Error("数据格式错误");
+            }
+            
+            // [新增] 封装导入逻辑
+            function handleImport(dataString) {
+                if (!dataString) {
+                    showInfoAlert('导入数据为空！');
+                    return;
+                }
+                try {
+                    const importedData = decompressData(dataString);
+                    
+                    if (typeof importedData === 'object' && importedData !== null && !Array.isArray(importedData)) {
+                        saveData(importedData);
+                        renderCalendar();
+                        bsImportDataModal.hide();
+                        bsExportOptionsModal.hide();
+                        showInfoAlert('数据导入成功！');
+                    } else {
+                        throw new Error("Invalid format");
+                    }
+                } catch (e) {
+                    console.error("Import error:", e);
+                    showInfoAlert('数据格式错误，请检查是否为正确的 JSON 格式。');
+                }
+            }
+
+
+            $('#copyToClipboardBtn').on('click', function() {
+                const compressedString = compressData(data);
+                navigator.clipboard.writeText(compressedString).then(() => {
+                    bsExportOptionsModal.hide();
+                    showInfoAlert('数据已复制到剪贴板！');
+                }).catch(err => {
+                    showInfoAlert('复制失败，请手动复制。');
+                });
+            });
+
+            // [修改] 下载数据为文件 (更新MIME类型)
+            $('#downloadDataBtn').on('click', function() {
+                try {
+                    const compressedString = compressData(data);
+                    // [修改] 使用 application/octet-stream 来强制下载
+                    const blob = new Blob([compressedString], { type: 'application/octet-stream' }); 
+                    
+                    // 创建一个下载链接
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    
+                    // [重要修改] 生成文件名，使用用户指定的格式和后缀
+                    const today = new Date();
+                    const y = String(today.getFullYear()).slice(-2);
+                    const m = String(today.getMonth() + 1).padStart(2, '0');
+                    const d = String(today.getDate()).padStart(2, '0');
+                    // 格式：空投数据备份YY.MM.DD.json
+                    link.download = `空投数据备份${y}.${m}.${d}.json`; 
+                    
+                    // 触发下载
+                    document.body.appendChild(link);
+                    link.click();
+                    
+                    // 清理
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(link.href);
+
+                } catch (e) {
+                    console.error("Error creating download file:", e);
+                    showInfoAlert('创建下载文件失败。');
+                }
+            });
+
+            // [修改] 导出模态框打开时，生成回退下载链接 (更新MIME类型)
+            $('#viewDataModal').on('show.bs.modal', function() {
+                const compressedString = compressData(data);
+                $('#viewDataArea').val(compressedString);
+                bsExportOptionsModal.hide();
+
+                // [修改] 生成并显示回退下载链接
+                try {
+                    // [修改] 使用 'application/octet-stream' 来尝试强制下载
+                    const dataUri = 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(compressedString);
+                    $('#fallbackDownloadLink').val(dataUri);
+                } catch (e) {
+                    console.error("Error creating data URI:", e);
+                    $('#fallbackDownloadLink').val("生成链接失败。");
+                }
+            });
+
+            // [新增] 导出模态框关闭时，清空回退链接
+            $('#viewDataModal').on('hidden.bs.modal', function() {
+                $('#fallbackDownloadLink').val('');
+            });
+
+
+            $('#importDataModal').on('show.bs.modal', function() {
+                $('#importDataArea').val('');
+                bsExportOptionsModal.hide();
+            });
+
+            // 粘贴导入
+            $('#importDataBtn').on('click', function() {
+                const dataString = $('#importDataArea').val().trim();
+                handleImport(dataString);
+            });
+
+            // [新增] 文件导入
+            $('#importFileInput').on('change', function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const dataString = e.target.result;
+                    handleImport(dataString);
+                };
+                reader.onerror = function() {
+                    showInfoAlert('读取文件失败。');
+                };
+                reader.readAsText(file);
+                
+                // 重置输入框，以便可以再次上传同名文件
+                $(this).val('');
+            });
+
+
+
+            // Clear All Data
+            $('#clearAllDataBtn').on('click', function() {
+                saveData({});
+                renderCalendar();
+                bsClearConfirmModal.hide();
+                showInfoAlert('日历数据已清空。');
+            });
+
+
+            // Wallpaper Logic - FIX: ensure custom image is persistent
+            function loadWallpaperSettings() {
+                try {
+                    const settings = localStorage.getItem('airdropWallpaperSettings');
+                    const defaultSettings = { type: 'color', value: '#f5f7fa', isBlurred: true, customImageUrl: '' };
+                    return settings ? { ...defaultSettings, ...JSON.parse(settings) } : defaultSettings;
+                } catch (e) {
+                    return { type: 'color', value: '#f5f7fa', isBlurred: true, customImageUrl: '' };
+                }
+            }
+
+            function saveWallpaperSettings(settings) {
+                localStorage.setItem('airdropWallpaperSettings', JSON.stringify(settings));
+            }
+
+            /**
+             * [修改] 修复壁纸BUG并处理清空逻辑
+             */
+            function applyWallpaperSettings() {
+                const settings = loadWallpaperSettings();
+                const $container = $('#calendarAppContainer');
+                const $customSwatch = $('#custom-wallpaper-swatch');
+
+                $container.removeClass('has-wallpaper wallpaper-blur-active light-text-theme');
+                $('#wallpaperBlurToggle').prop('checked', settings.isBlurred);
+
+                // 1. Always display the custom swatch if an image URL is stored
+                if (settings.customImageUrl) {
+                    $customSwatch.show().css('background-image', `url('${settings.customImageUrl}')`);
+                } else {
+                    $customSwatch.hide();
+                }
+
+                $container.get(0).style.setProperty('--current-background', 'none'); // Default to none first
+
+                if (settings.type === 'color') {
+                    // 2. Color mode: Set container color and transparent background
+                    $container.css('background-color', settings.value);
+                    $container.get(0).style.setProperty('--current-background', 'none');
+                    // If dark color, enable light text theme
+                    if (['#2c3e50', '#3498db', '#e74c3c', '#1abc9c'].includes(settings.value)) {
+                        $container.addClass('light-text-theme');
+                    }
+                } else if (settings.type === 'image' && settings.value) {
+                    // 3. Image mode: Set image on the ::before pseudo-element
+                    
+                    // [FIX] 强制更新 CSS 变量以避免浏览器缓存 Data URI
+                    const backgroundStyle = `url('${settings.value}')`;
+                    $container.get(0).style.setProperty('--current-background', backgroundStyle);
+                    
+                    $container.addClass('has-wallpaper');
+                    $container.css('background-color', 'transparent'); 
+
+                    // [FIX] 始终为图片背景应用浅色文本，防止深色壁纸+深色文字
+                    $container.addClass('light-text-theme');
+
+                    if (settings.isBlurred) {
+                         $container.addClass('wallpaper-blur-active');
+                    }
+                } else {
+                    // Fallback to default light color if type is 'none' or image failed
+                    $container.get(0).style.setProperty('--current-background', 'none');
+                    $container.css('background-color', 'rgba(255, 255, 255, 0.85)');
+                    $container.removeClass('light-text-theme');
+                }
+            }
+
+            // [修改] 移除了 'clearWallpaperData' 函数和它的点击事件绑定
+
+            // Default color/wallpaper options
+            $('.color-swatch').on('click', function() {
+                const color = $(this).data('color');
+                const settings = loadWallpaperSettings();
+
+                if (color) {
+                    // It's a color swatch -> set type to color, preserve custom image URL
+                    saveWallpaperSettings({
+                        type: 'color',
+                        value: color,
+                        isBlurred: settings.isBlurred,
+                        customImageUrl: settings.customImageUrl
+                    });
+                } else if ($(this).attr('id') === 'custom-wallpaper-swatch' && settings.customImageUrl) {
+                    // It's the custom image swatch -> set type to image
+                    saveWallpaperSettings({
+                        type: 'image',
+                        value: settings.customImageUrl,
+                        isBlurred: settings.isBlurred,
+                        customImageUrl: settings.customImageUrl
+                    });
+                }
+                applyWallpaperSettings();
+            });
+
+            // Custom Wallpaper Upload
+            $('#customWallpaperInput').on('change', function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                // [修改: 移除文件大小检查]
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageUrl = e.target.result;
+                    const settings = loadWallpaperSettings(); // Get existing blur setting
+
+                    saveWallpaperSettings({
+                        type: 'image',
+                        value: imageUrl,
+                        isBlurred: settings.isBlurred,
+                        customImageUrl: imageUrl // Store persistently
+                    });
+                    applyWallpaperSettings(); // 立即应用
+                };
+                reader.readAsDataURL(file);
+                // 清除 input 的值，这样即使用户选择同一个文件也能再次触发 change 事件
+                $(this).val('');
+            });
+
+            // Wallpaper Blur Toggle
+            $('#wallpaperBlurToggle').on('change', function() {
+                const settings = loadWallpaperSettings();
+                settings.isBlurred = this.checked;
+                saveWallpaperSettings(settings);
+                applyWallpaperSettings();
+            });
+
+
+            // --- Time Display ---
+            function updateTime() {
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                $('#currentTime').text(`${hours}:${minutes}:${seconds}`);
+            }
+            setInterval(updateTime, 1000);
+            updateTime();
+
+
+            function showInfoAlert(message) {
+                $('#infoAlertMessage').text(message);
+                bsInfoAlertModal.show();
+            }
+
+
+            // Initial render
+            renderCalendar();
+            applyWallpaperSettings();
+        });
+    </script>
+
+</body>
+</html>
