@@ -1851,71 +1851,73 @@
         /**
          * [修改] 代币分析 - 渲染HTML (使用手风琴折叠)
          */
+        /**
+         * [修改] 代币分析 - 渲染HTML (优化移动端字体，移除+号和斜杠)
+         */
+        /**
+         * [修改] 代币分析 - 渲染HTML (优化总览布局，精简折叠头)
+         */
+        /**
+         * [修改] 代币分析 - 渲染HTML (仅在混合条目显示损益详情)
+         */
         function renderTokenAnalysis(analysisData) {
-            // [修改] 获取 groupedAnalysis
             const { groupedAnalysis, overviewCounts } = analysisData; 
             
             const $body = $('#tokenAnalysisModalBody');
             
-            // 1. 渲染总览 (交易所/钱包) - 这部分不变
+            // 1. 渲染总览 (Grid 布局) - (无变动)
             let overviewHtml = `
                 <div class="card p-3 mb-4 rounded-3 shadow-sm" style="background-color: rgba(255, 255, 255, 0.8);">
-                    <h6 class="text-center mb-3 fw-bold text-primary">本月项目总览</h6>
-                    <div class="d-flex justify-content-around flex-wrap gap-4">
-                        <div class="text-center">
-                            <div class="small text-muted fw-bold mb-2" style="font-size: 0.85rem; border-bottom: 1px solid #ddd; padding-bottom: 4px;">交易所</div>
-                            <div class="d-flex justify-content-center gap-4">
-                                <div class="text-center px-2">
-                                    <span class="fw-bold fs-5" style="color: #1976d2;">${overviewCounts.airdrop}</span>
-                                    <div class="small text-muted">空投</div>
-                                </div>
-                                <div class="text-center px-2">
-                                    <span class="fw-bold fs-5" style="color: #f57c00;">${overviewCounts.trading}</span>
-                                    <div class="small text-muted">交易赛</div>
-                                </div>
-                            </div>
+                    <h6 class="text-center mb-3 fw-bold text-primary">本月项目总览 (按类型)</h6>
+                    
+                    <div class="row text-center gy-3">
+                        <div class="col-6">
+                            <div class="small text-muted fw-bold" style="font-size: 0.85rem; border-bottom: 1px solid #ddd; padding-bottom: 4px;">交易所</div>
                         </div>
-                        <div class="text-center">
-                            <div class="small text-muted fw-bold mb-2" style="font-size: 0.85rem; border-bottom: 1px solid #ddd; padding-bottom: 4px;">钱包</div>
-                            <div class="d-flex justify-content-center gap-4">
-                                <div class="text-center px-2">
-                                    <span class="fw-bold fs-5" style="color: #7b1fa2;">${overviewCounts.tge}</span>
-                                    <div class="small text-muted">TGE</div>
-                                </div>
-                                <div class="text-center px-2">
-                                    <span class="fw-bold fs-5" style="color: #388e3c;">${overviewCounts.booster}</span>
-                                    <div class="small text-muted">Booster</div>
-                                </div>
-                            </div>
+                        <div class="col-6">
+                            <div class="small text-muted fw-bold" style="font-size: 0.85rem; border-bottom: 1px solid #ddd; padding-bottom: 4px;">钱包</div>
+                        </div>
+
+                        <div class="col-3">
+                            <span class="fw-bold fs-5" style="color: #1976d2;">${overviewCounts.airdrop}</span>
+                            <div class="small text-muted" style="font-size: 0.7rem;">空投</div>
+                        </div>
+                        <div class="col-3">
+                            <span class="fw-bold fs-5" style="color: #f57c00;">${overviewCounts.trading}</span>
+                            <div class="small text-muted" style="font-size: 0.7rem;">交易赛</div>
+                        </div>
+                        <div class="col-3">
+                            <span class="fw-bold fs-5" style="color: #7b1fa2;">${overviewCounts.tge}</span>
+                            <div class="small text-muted" style="font-size: 0.7rem;">TGE</div>
+                        </div>
+                        <div class="col-3">
+                            <span class="fw-bold fs-5" style="color: #388e3c;">${overviewCounts.booster}</span>
+                            <div class="small text-muted" style="font-size: 0.7rem;">Booster</div>
                         </div>
                     </div>
                 </div>
             `;
 
-            // 2. [新增] 构建手风琴折叠列表
+            // 2. 构建手风琴折叠列表
             let listHtml = '<div class="accordion analysis-accordion" id="analysisAccordion">';
             
-            // 定义组的显示顺序
             const groupOrder = ['airdrop', 'trading', 'tge', 'booster', 'fastExpense'];
-            let hasData = false; // 检查是否真的有数据
+            let hasData = false; 
 
             groupOrder.forEach(groupKey => {
                 const group = groupedAnalysis[groupKey];
                 
-                // 如果这个组里没有项目，就跳过，不渲染
                 if (!group || group.projectCount === 0) {
                     return;
                 }
-                hasData = true; // 确认有数据
+                hasData = true; 
 
                 const netColor = group.netValue > 0 ? 'text-success' : (group.netValue < 0 ? 'text-danger' : 'text-muted');
                 const collapseId = `collapse-${groupKey}`;
                 const headerId = `header-${groupKey}`;
 
-                // 手风琴项目
                 listHtml += `<div class="accordion-item">`;
                 
-                // 手风琴标题 (包含概览)
                 listHtml += `<h2 class="accordion-header" id="${headerId}">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" aria-controls="${collapseId}">
                         <div class="d-flex justify-content-between w-100 align-items-center pe-2">
@@ -1925,23 +1927,29 @@
                             </div>
                             <div class="text-end" style="flex-shrink: 0; padding-left: 10px;">
                                 <strong class="${netColor}" style="font-size: 1.1rem; display: block;">${formatCurrency(group.netValue)}</strong>
-                                <div class="small text-muted" style="font-size: 0.75rem;">
-                                    <span class="text-success" title="总收益">+${formatCurrency(group.profit)}</span> / <span class="text-danger" title="总支出">${formatCurrency(Math.abs(group.expense))}</span>
-                                </div>
                             </div>
                         </div>
                     </button>
                 </h2>`;
 
-                // 手风琴内容 (项目列表)
-                listHtml += `<div id="${collapseId}" class="accordion-collapse collapse" aria-labelledby="${headerId}" data-bs-parent="#analysisAccordion">
+                listHtml += `<div id="${collapseId}" class="accordion-collapse collapse" aria-labelledby="${headerId}">
                     <div class="accordion-body">
                         <ul class="list-group list-group-flush">`;
                 
-                // 渲染组内的每个项目 (逻辑与之前类似)
+                // [修改] 内部列表项
                 group.items.forEach(item => {
                     const itemNetColor = item.netValue > 0 ? 'text-success' : (item.netValue < 0 ? 'text-danger' : 'text-muted');
                     
+                    // [新增] 仅当 'profit' 和 'expense' 都有值(expense是负数)时，才创建详情HTML
+                    let detailHtml = '';
+                    if (item.profit > 0 && item.expense < 0) {
+                        detailHtml = `
+                        <div class="small text-muted">
+                            <small class="text-success me-1" title="总收益">+${formatCurrency(item.profit)}</small> / <small class="text-danger ms-1" title="总支出">${formatCurrency(Math.abs(item.expense))}</small>
+                        </div>
+                        `;
+                    }
+
                     listHtml += `
                         <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap" style="background-color: transparent;">
                             <div class="me-3 mb-2 mb-md-0">
@@ -1950,21 +1958,17 @@
                             </div>
                             <div class="d-flex flex-column align-items-end" style="min-width: 150px;">
                                 <span class="fw-bolder fs-6 ${itemNetColor}">${formatCurrency(item.netValue)}</span>
-                                <div>
-                                    <small class="text-success me-2" title="总收益">+${formatCurrency(item.profit)}</small>
-                                    <small class="text-danger" title="总支出">${formatCurrency(Math.abs(item.expense))}</small>
-                                </div>
+                                ${detailHtml}
                             </div>
                         </li>
                     `;
                 });
 
-                listHtml += `</ul></div></div></div>`; // 关闭 accordion-body, collapse, item
+                listHtml += `</ul></div></div></div>`; 
             });
 
-            listHtml += '</div>'; // 关闭 accordion
+            listHtml += '</div>'; 
 
-            // 如果遍历完所有组都没有数据
             if (!hasData) {
                  $body.html(overviewHtml + '<p class="text-center text-muted mt-4">本月无数据可供分析。</p>');
                  return;
