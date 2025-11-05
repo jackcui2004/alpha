@@ -1680,10 +1680,18 @@
         }
 
         /**
-         * [新增] 代币分析 - 数据处理
+         * [修改] 代币分析 - 数据处理 (按名称+子类型分组，并增加总览)
          */
         function processDataForTokenAnalysis() {
             const tokenSummary = {};
+            // [新增] 用于总览的计数器
+            const overviewCounts = {
+                airdrop: 0,
+                tge: 0,
+                trading: 0,
+                booster: 0,
+                fastExpense: 0
+            };
             const monthStr = String(currentMonth + 1).padStart(2, '0');
 
             Object.keys(data).forEach(dateKey => {
@@ -1691,21 +1699,34 @@
                 if (date.getFullYear() === currentYear && date.getMonth() === currentMonth) {
                     const entries = data[dateKey] || [];
                     entries.forEach(entry => {
-                        // [修改] 磨损类条目如果没有填项目名称，则归类为 '常规磨损'
                         const value = parseFloat(entry.estimatedValue || 0);
                         let name;
+                        let subtype;
 
-                        if (value < 0 && (!entry.projectName || entry.projectName.trim() === '')) {
-                            name = '常规磨损'; // 归类
+                        // 1. 确定名称和子类型
+                        if (value < 0) {
+                            // 所有负值（磨损）
+                            name = (entry.projectName || '常规磨损').trim();
+                            subtype = 'fastExpense';
                         } else {
+                            // 所有正值（收益）
                             name = (entry.projectName || '未指定项目').trim();
+                            subtype = entry.subtype || 'airdrop';
                         }
-                        
-                        const lowerName = name.toLowerCase();
 
-                        if (!tokenSummary[lowerName]) {
-                            tokenSummary[lowerName] = { 
-                                displayName: name, // 保留第一次出现时的大小写
+                        // 2. [新增] 累加到总览计数器
+                        if (overviewCounts.hasOwnProperty(subtype)) {
+                            overviewCounts[subtype]++;
+                        }
+
+                        const lowerName = name.toLowerCase();
+                        // 3. [修改] 使用 名称 + 子类型 作为唯一键
+                        const uniqueKey = lowerName + '||' + subtype; 
+
+                        if (!tokenSummary[uniqueKey]) {
+                            tokenSummary[uniqueKey] = { 
+                                displayName: name, // 保留首次出现的大小写
+                                subtype: subtype,  // [新增] 存储子类型
                                 netValue: 0,
                                 profit: 0,
                                 expense: 0, // 存负值
@@ -1713,13 +1734,14 @@
                             };
                         }
 
-                        tokenSummary[lowerName].netValue += value;
-                        tokenSummary[lowerName].count++;
+                        // 4. 累加数据
+                        tokenSummary[uniqueKey].netValue += value;
+                        tokenSummary[uniqueKey].count++;
 
                         if (value > 0) {
-                            tokenSummary[lowerName].profit += value;
+                            tokenSummary[uniqueKey].profit += value;
                         } else if (value < 0) {
-                            tokenSummary[lowerName].expense += value; // 累加负值
+                            tokenSummary[uniqueKey].expense += value; // 累加负值
                         }
                     });
                 }
@@ -1727,29 +1749,106 @@
 
             // 转换并排序 (按净收益降序)
             const summaryArray = Object.values(tokenSummary).sort((a, b) => b.netValue - a.netValue);
-            return summaryArray;
+            
+            // [修改] 返回一个包含列表和总览的对象
+            return { summaryArray, overviewCounts };
         }
 
         /**
-         * [新增] 代币分析 - 渲染HTML
+         * [新增] 辅助函数：获取子类型的中文显示
+         */
+        function getSubtypeDisplay(subtype) {
+            switch(subtype) {
+                case 'airdrop': return '空投';
+                case 'tge': return 'TGE';
+                case 'trading': return '交易赛';
+                case 'booster': return 'Booster';
+                case 'fastExpense': return '磨损';
+                default: return subtype;
+            }
+        }
+        
+        /**
+         * [新增] 辅助函数：获取子类型的徽章HTML
+         */
+        function getSubtypeBadge(subtype) {
+            let bgColor, textColor, label;
+            label = getSubtypeDisplay(subtype);
+            
+            switch(subtype) {
+                case 'tge':
+                    bgColor = '#f3e5f5'; textColor = '#7b1fa2'; break;
+                case 'trading':
+                    bgColor = '#fff3e0'; textColor = '#f57c00'; break;
+                case 'booster':
+                    bgColor = '#e8f5e8'; textColor = '#388e3c'; break;
+                case 'fastExpense':
+                    bgColor = '#ffebee'; textColor = '#d32f2f'; break;
+                case 'airdrop':
+                default:
+                    bgColor = '#e3f2fd'; textColor = '#1976d2'; break;
+            }
+            // 使用 Bootstrap 徽章样式，并微调
+            return `<span class="badge" style="background-color: ${bgColor}; color: ${textColor}; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; font-weight: 500;">${label}</span>`;
+        }
+
+        /**
+         * [修改] 代币分析 - 渲染HTML (增加总览 和 子类型徽章)
          */
         function renderTokenAnalysis(analysisData) {
+            // [修改] 解构来自 processDataForTokenAnalysis 的新对象
+            const { summaryArray, overviewCounts } = analysisData;
+            
             const $body = $('#tokenAnalysisModalBody');
-            if (!analysisData || analysisData.length === 0) {
+            if (!summaryArray || summaryArray.length === 0) {
                 $body.html('<p class="text-center text-muted">本月无数据可供分析。</p>');
                 return;
             }
 
-            let html = '<ul class="list-group list-group-flush">';
+            // 1. [新增] 构建总览 (Overview) 的 HTML
+            let overviewHtml = `
+                <div class="card p-3 mb-4 rounded-3 shadow-sm" style="background-color: rgba(255, 255, 255, 0.8);">
+                    <h6 class="text-center mb-3 fw-bold text-primary">本月记录总览</h6>
+                    <div class="d-flex justify-content-around flex-wrap gap-3">
+                        <div class="text-center px-2">
+                            <span class="fw-bold fs-5" style="color: #1976d2;">${overviewCounts.airdrop}</span>
+                            <div class="small text-muted">空投</div>
+                        </div>
+                        <div class="text-center px-2">
+                            <span class="fw-bold fs-5" style="color: #7b1fa2;">${overviewCounts.tge}</span>
+                            <div class="small text-muted">TGE</div>
+                        </div>
+                        <div class="text-center px-2">
+                            <span class="fw-bold fs-5" style="color: #f57c00;">${overviewCounts.trading}</span>
+                            <div class="small text-muted">交易赛</div>
+                        </div>
+                        <div class="text-center px-2">
+                            <span class="fw-bold fs-5" style="color: #388e3c;">${overviewCounts.booster}</span>
+                            <div class="small text-muted">Booster</div>
+                        </div>
+                        <div class="text-center px-2">
+                            <span class="fw-bold fs-5 text-danger">${overviewCounts.fastExpense}</span>
+                            <div class="small text-muted">磨损</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 2. [修改] 构建列表的 HTML
+            let listHtml = '<ul class="list-group list-group-flush">';
             
-            analysisData.forEach(item => {
+            summaryArray.forEach(item => {
                 const netColor = item.netValue > 0 ? 'text-success' : (item.netValue < 0 ? 'text-danger' : 'text-muted');
+                // [新增] 获取子类型徽章
+                const subtypeBadge = getSubtypeBadge(item.subtype);
                 
-                html += `
-                    <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
+                listHtml += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap" style="background-color: transparent; padding-left: 0; padding-right: 0;">
                         <div class="me-3 mb-2 mb-md-0">
-                            <h6 class="mb-0 fw-bold">${item.displayName}</h6>
-                            <small class="text-muted">共 ${item.count} 笔记录</small>
+                            <h6 class="mb-2 fw-bold">${item.displayName}</h6>
+                            <div class="d-flex align-items-center gap-2">
+                                ${subtypeBadge} <small class="text-muted" style="font-size: 0.8rem;">(共 ${item.count} 笔)</small>
+                            </div>
                         </div>
                         <div class="d-flex flex-column align-items-end" style="min-width: 150px;">
                             <span class="fw-bolder fs-6 ${netColor}">${formatCurrency(item.netValue)}</span>
@@ -1762,9 +1861,12 @@
                 `;
             });
             
-            html += '</ul>';
-            $body.html(html);
+            listHtml += '</ul>';
+
+            // 3. [修改] 组合 HTML 并渲染
+            $body.html(overviewHtml + listHtml);
         }
+
 
         /**
          * [新增] 代币分析 - 显示模态框
