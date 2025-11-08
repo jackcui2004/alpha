@@ -10,12 +10,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <style>
-        /* 核心样式 - 保持不变 */
+        /* [修改] 移除 flex 布局以适应多页面 */
         body {
             background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
             min-height: 100vh;
             padding: 20px;
             box-sizing: border-box;
@@ -33,6 +30,8 @@
             position: relative;
             overflow: hidden;
             z-index: 1;
+            /* [新增] 确保在 Tab 布局中居中 */
+            margin: 0 auto; 
         }
 
         /* 壁纸背景处理 - 修复逻辑 */
@@ -597,65 +596,401 @@
             border-bottom: none !important;
         }
 
+        /* [新增] 导航按钮样式 */
+        .nav-pills .nav-link {
+            color: #007bff;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            background-color: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        .nav-pills .nav-link:not(.active):hover {
+            background-color: rgba(255, 255, 255, 0.6);
+        }
+        .nav-pills .nav-link.active {
+            background-color: #007bff;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+
+        /* [新增] 修仙游戏界面样式 */
+        .player-panel {
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .player-panel h3 {
+            font-weight: 700;
+            color: #333;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .player-panel .level-name {
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-align: center;
+            color: #0d6efd;
+            margin-bottom: 10px;
+        }
+
+        .player-panel .progress {
+            height: 25px;
+            border-radius: 12px;
+            background-color: rgba(0, 0, 0, 0.1);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .player-panel .progress-bar {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+            background: linear-gradient(90deg, #007bff, #00c6ff);
+            border-radius: 12px;
+        }
+
+        /* 修为等级的颜色 */
+        .level-lianqi { color: #6c757d; } /* 炼气 */
+        .level-zhuji { color: #0d6efd; } /* 筑基 */
+        .level-jiedan { color: #6f42c1; } /* 结丹 */
+        .level-yuanying { color: #fd7e14; } /* 元婴 */
+        .level-huashen { color: #d63384; } /* 化神 */
+        .level-dacheng { color: #dc3545; } /* 大乘 */
+        .level-xian { 
+            color: #ffc107; 
+            text-shadow: 0 0 8px #ffc107, 0 0 16px #ffc107;
+        } /* 仙 */
+
+    /* [新增] 角色打坐样式 */
+.player-avatar {
+    font-size: 5rem;
+    text-align: center;
+    color: #6c757d;
+    margin-bottom: 15px;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.player-avatar .fa-person-praying { /* 这是一个 FontAwesome 6 图标 */
+    display: block;
+}
+
+/* [新增] 背包内部分类Tab样式 */
+.skills-panel .nav-pills {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    padding: 5px;
+}
+.skills-panel .nav-link {
+    color: #495057;
+    font-weight: 500;
+    border-radius: 9px;
+    transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.skills-panel .nav-link.active {
+    background-color: #fff;
+    color: #0d6efd;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.skills-panel .tab-content {
+    margin-top: 15px;
+}/* [新增] 关卡挑战列表样式 */
+.challenge-panel {
+    margin-top: 20px;
+}
+
+.level-list-container {
+    max-height: 300px; /* 设置一个最大高度 */
+    overflow-y: auto; /* 超出高度时滚动 */
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    padding: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.level-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 12px 15px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+.level-btn:last-child {
+    margin-bottom: 0;
+}
+
+/* 关卡按钮 - 普通小怪 */
+.level-btn.type-mob {
+    background-color: #fff;
+    color: #333;
+}
+.level-btn.type-mob:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* 关卡按钮 - BOSS */
+.level-btn.type-boss {
+    background-color: #ffebee; /* 淡红色背景 */
+    color: #d32f2f; /* 深红色文字 */
+    border-color: rgba(220, 53, 69, 0.3);
+    font-weight: 700;
+}
+.level-btn.type-boss:hover {
+    background-color: #f8d7da;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.15);
+}
+
+/* 关卡按钮 - 推荐战力 */
+.level-btn .level-power {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #6c757d;
+}
+.level-btn.type-boss .level-power {
+    color: #d32f2f;
+}/* [新增] 关卡挑战列表样式 */
+.challenge-panel {
+    margin-top: 20px;
+}
+
+.level-list-container {
+    max-height: 300px; /* 设置一个最大高度 */
+    overflow-y: auto; /* 超出高度时滚动 */
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    padding: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.level-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 12px 15px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+.level-btn:last-child {
+    margin-bottom: 0;
+}
+
+/* 关卡按钮 - 普通小怪 */
+.level-btn.type-mob {
+    background-color: #fff;
+    color: #333;
+}
+.level-btn.type-mob:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* 关卡按钮 - BOSS */
+.level-btn.type-boss {
+    background-color: #ffebee; /* 淡红色背景 */
+    color: #d32f2f; /* 深红色文字 */
+    border-color: rgba(220, 53, 69, 0.3);
+    font-weight: 700;
+}
+.level-btn.type-boss:hover {
+    background-color: #f8d7da;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.15);
+}
+
+/* 关卡按钮 - 推荐战力 */
+.level-btn .level-power {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #6c757d;
+}
+.level-btn.type-boss .level-power {
+    color: #d32f2f;
+}
     </style>
-</head>
-<body>
-    <div class="calendar-app" id="calendarAppContainer">
-        <div id="currentTime" class="current-time"></div>
-        <h1>空投收益日历</h1>
-        <div class="header-controls">
-            <div class="month-navigation">
-                <button class="btn" id="prevMonthBtn"><i class="fas fa-chevron-left"></i></button>
-                <h2 id="currentMonthYear"></h2>
-                <button class="btn" id="nextMonthBtn"><i class="fas fa-chevron-right"></i></button>
-            </div>
-        </div>
-        <div class="day-header-row">
-            <div class="day-header">日</div> <div class="day-header">一</div> <div class="day-header">二</div> <div class="day-header">三</div>
-            <div class="day-header">四</div> <div class="day-header">五</div> <div class="day-header">六</div>
-        </div>
-        <div class="calendar-wrapper" id="calendarWrapper"></div>
+</head><body>
 
-        <div class="summary-actions">
-            <div class="action-buttons">
-                <button class="btn btn-export" data-bs-toggle="modal" data-bs-target="#exportOptionsModal"><i class="fas fa-file-arrow-up-down me-2"></i> 导入/导出</button>
-                <button class="btn btn-clear" data-bs-toggle="modal" data-bs-target="#clearConfirmModal"><i class="fas fa-trash-can me-2"></i> 清空日历</button>
-            </div>
-            <div class="card-total-summary" data-bs-toggle="modal" data-bs-target="#summaryModal">
-                本月净收益: <span id="monthlyTotal">--</span>
-            </div>
-        </div>
+    <div class="main-app-wrapper" style="max-width: 1050px; margin: 0 auto;">
+    
+        <ul class="nav nav-pills nav-fill mb-3" id="mainAppNavigation" role="tablist" style="background-color: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border-radius: 16px; padding: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="nav-calendar-tab" data-bs-toggle="tab" data-bs-target="#airdropCalendarPage" type="button" role="tab" aria-controls="airdropCalendarPage" aria-selected="true">
+                    <i class="fas fa-calendar-alt me-2"></i> 空投日历
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="nav-second-tab" data-bs-toggle="tab" data-bs-target="#secondInterfacePage" type="button" role="tab" aria-controls="secondInterfacePage" aria-selected="false">
+                    <i class="fas fa-gamepad me-2"></i> 修仙面板
+                </button>
+            </li>
+        </ul>
 
-        <div class="wallpaper-options">
-            <label class="custom-file-upload">
-                自定义
-                <input type="file" id="customWallpaperInput" accept="image/*" style="display:none;">
-            </label>
-            <div class="blur-toggle-switch">
-                <span>模糊</span>
-                <label class="switch">
-                    <input type="checkbox" id="wallpaperBlurToggle">
-                    <span class="slider"></span>
-                </label>
-                <span>原画</span>
-            </div>
-            <div class="default-wallpapers">
-                <div class="color-swatch" id="custom-wallpaper-swatch" style="display: none; background-size: cover;"></div>
-                <div class="color-swatch" data-color="#f5f7fa" style="background-color: #f5f7fa;"></div>
-                <div class="color-swatch" data-color="#2c3e50" style="background-color: #2c3e50;"></div>
-                <div class="color-swatch" data-color="#3498db" style="background-color: #3498db;"></div>
-                <div class="color-swatch" data-color="#e74c3c" style="background-color: #e74c3c;"></div>
-                <div class="color-swatch" data-color="#1abc9c" style="background-color: #1abc9c;"></div>
-            </div>
+        <div class="tab-content" id="mainAppTabContent">
+
+            <div class="tab-pane fade show active" id="airdropCalendarPage" role="tabpanel" aria-labelledby="nav-calendar-tab">
+
+                <div class="calendar-app" id="calendarAppContainer">
+                    <div id="currentTime" class="current-time"></div>
+                    <h1>空投收益日历</h1>
+                    <div class="header-controls">
+                        <div class="month-navigation">
+                            <button class="btn" id="prevMonthBtn"><i class="fas fa-chevron-left"></i></button>
+                            <h2 id="currentMonthYear"></h2>
+                            <button class="btn" id="nextMonthBtn"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                    <div class="day-header-row">
+                        <div class="day-header">日</div> <div class="day-header">一</div> <div class="day-header">二</div> <div class="day-header">三</div>
+                        <div class="day-header">四</div> <div class="day-header">五</div> <div class="day-header">六</div>
+                    </div>
+                    <div class="calendar-wrapper" id="calendarWrapper"></div>
+
+                    <div class="summary-actions">
+                        <div class="action-buttons">
+                            <button class="btn btn-export" data-bs-toggle="modal" data-bs-target="#exportOptionsModal"><i class="fas fa-file-arrow-up-down me-2"></i> 导入/导出</button>
+                            <button class="btn btn-clear" data-bs-toggle="modal" data-bs-target="#clearConfirmModal"><i class="fas fa-trash-can me-2"></i> 清空日历</button>
+                        </div>
+                        <div class="card-total-summary" data-bs-toggle="modal" data-bs-target="#summaryModal">
+                            本月净收益: <span id="monthlyTotal">--</span>
+                        </div>
+                    </div>
+
+                    <div class="wallpaper-options">
+                        <label class="custom-file-upload">
+                            自定义
+                            <input type="file" id="customWallpaperInput" accept="image/*" style="display:none;">
+                        </label>
+                        <div class="blur-toggle-switch">
+                            <span>模糊</span>
+                            <label class="switch">
+                                <input type="checkbox" id="wallpaperBlurToggle">
+                                <span class="slider"></span>
+                            </label>
+                            <span>原画</span>
+                        </div>
+                        <div class="default-wallpapers">
+                            <div class="color-swatch" id="custom-wallpaper-swatch" style="display: none; background-size: cover;"></div>
+                            <div class="color-swatch" data-color="#f5f7fa" style="background-color: #f5f7fa;"></div>
+                            <div class="color-swatch" data-color="#2c3e50" style="background-color: #2c3e50;"></div>
+                            <div class="color-swatch" data-color="#3498db" style="background-color: #3498db;"></div>
+                            <div class="color-swatch" data-color="#e74c3c" style="background-color: #e74c3c;"></div>
+                            <div class="color-swatch" data-color="#1abc9c" style="background-color: #1abc9c;"></div>
+                        </div>
+                        </div>
+
+                    <div class="footer-info">
+                        <div class="author-name">开发者：赵铁柱</div>
+                        <div class="statement-text">本工具仅用于个人记录，不构成任何投资建议。</div>
+                    </div>
+                </div>
+
+            </div> <div class="tab-pane fade" id="secondInterfacePage" role="tabpanel" aria-labelledby="nav-second-tab">
+                <div class="calendar-app" id="secondInterfaceContainer">
+                    
+                    <div class="player-panel">
+                    
+                    <div class="player-avatar">
+                        <i class="fas fa-person-praying"></i> </div>
+
+                    <h3>道号：<span id="playerName">赵铁柱</span></h3>
+                    <div class="level-name level-lianqi" id="playerLevel">炼气期 · 一阶</div>
+                    
+                    <label for="playerProgress" class="form-label small text-muted">当前修为：</label>
+                    <div class="progress" id="playerProgress">
+                        <div class="progress-bar" id="playerProgressBar" role="progressbar" style="width: 10%;" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100">
+                            10 / 100
+                        </div>
+                    </div>
+                </div>
+
+                <div class="skills-panel mt-4">
+                    <h4 class="text-center mb-3">我的背包</h4>
+                    
+                    <ul class="nav nav-pills nav-fill mb-3" id="backpackTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="skills-tab" data-bs-toggle="tab" data-bs-target="#skills-pane" type="button" role="tab" aria-controls="skills-pane" aria-selected="true">
+                                <i class="fas fa-book me-1"></i> 功法
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="treasures-tab" data-bs-toggle="tab" data-bs-target="#treasures-pane" type="button" role="tab" aria-controls="treasures-pane" aria-selected="false">
+                                <i class="fas fa-gem me-1"></i> 法宝
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="pills-tab" data-bs-toggle="tab" data-bs-target="#pills-pane" type="button" role="tab" aria-controls="pills-pane" aria-selected="false">
+                                <i class="fas fa-pills me-1"></i> 丹药
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="backpackTabContent">
+                        
+                        <div class="tab-pane fade show active" id="skills-pane" role="tabpanel" aria-labelledby="skills-tab">
+                            <div class="list-group" id="playerSkillsList">
+                                <a href="#" class="list-group-item list-group-item-action text-muted text-center">
+                                    暂未领悟任何功法...
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="treasures-pane" role="tabpanel" aria-labelledby="treasures-tab">
+                            <div class="list-group">
+                                <a href="#" class="list-group-item list-group-item-action text-muted text-center">
+                                    暂无任何法宝...
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="pills-pane" role="tabpanel" aria-labelledby="pills-tab">
+                            <div class="list-group">
+                                <a href="#" class="list-group-item list-group-item-action text-muted text-center">
+                                    暂无任何丹药...
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                    <div class="challenge-panel mt-4">
+                    <h4 class="text-center mb-3">秘境挑战</h4>
+
+                    <div class="level-list-container mb-3" id="levelListContainer">
+                        <div class="text-center p-3 text-muted">
+                            正在加载秘境列表...
+                        </div>
+                    </div>
+
+                    <div class="card mt-3" style="background-color: rgba(255, 255, 255, 0.7); border-radius: 12px;">
+                        <div class="card-header" style="font-weight: 600; background-color: rgba(0,0,0,0.03); border-bottom: 1px solid rgba(0,0,0,0.08);">
+                            战斗日志
+                        </div>
+                        <div class="card-body" id="battleLog" style="max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 0.9rem;">
+                            等待挑战...
+                        </div>
+                    </div>
+                </div>
             </div>
 
-        <div class="footer-info">
-            <div class="author-name">开发者：赵铁柱</div>
-            <div class="statement-text">本工具仅用于个人记录，不构成任何投资建议。</div>
-        </div>
-    </div>
 
-    <div class="modal fade" id="entryModal" tabindex="-1" aria-hidden="true">
+        </div> </div> <div class="modal fade" id="entryModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -721,8 +1056,7 @@
                 </div>
             </div>
         </div>
-    </div>
-    <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+    </div><div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -964,9 +1298,23 @@
         // [新增] K线图和代币分析的模态框实例
         const bsChartModal = new bootstrap.Modal(document.getElementById('chartModal'));
         const bsTokenAnalysisModal = new bootstrap.Modal(document.getElementById('tokenAnalysisModal'));
-        let kLineChartInstance = null; // 用于存储 Chart.js 实例，以便销毁
+       let kLineChartInstance = null; // 用于存储 Chart.js 实例，以便销毁
 
+        // [新增] 游戏关卡数据
+        const gameLevels = [
+            { id: 1, name: "宗门外围", type: "mob", power: 50 },
+            { id: 2, name: "后山野林", type: "mob", power: 150 },
+            { id: 3, name: "【首领】林中巨蟒", type: "boss", power: 300 },
+            { id: 4, name: "灵矿洞穴", type: "mob", power: 600 },
+            { id: 5, name: "【首领】洞穴魔蛛", type: "boss", power: 1000 },
+            { id: 6, name: "外门试炼", type: "mob", power: 1500 },
+            { id: 7, name: "内门比武", type: "mob", power: 2500 },
+            { id: 8, name: "【首领】大师兄", type: "boss", power: 4000 },
+            { id: 9, name: "魔宗入侵", type: "mob", power: 6000 },
+            { id: 10, name: "【首领】魔宗长老", type: "boss", power: 10000 }
+        ];
 
+        // Handle entry modal close/cancel...
         // Handle entry modal close/cancel - return to previous modal with parallel animation
         $('#entryModal .btn-close, #entryModal [data-bs-dismiss="modal"]').on('click', function() {
             if (modalSource === 'dayDetail') {
@@ -996,6 +1344,9 @@
         function saveData(newData) {
             data = newData;
             localStorage.setItem('airdropCalendarData', JSON.stringify(data));
+            
+            // [新增] 游戏化：每当数据保存时，都更新修仙面板
+            updateGameUI();
         }
 
         function formatCurrency(value) {
@@ -2196,8 +2547,7 @@
                     if (data[dateKey].length === 0) {
                         delete data[dateKey];
                     }
-                    saveData(data);
-                    renderCalendar();
+                    saveData(data);renderCalendar();
                     bsConfirmModal.hide();
                     showInfoAlert('记录删除成功！');
                     modalSource = ''; // 重置模态框来源
@@ -2440,10 +2790,11 @@
              */
             function applyWallpaperSettings() {
                 const settings = loadWallpaperSettings();
-                const $container = $('#calendarAppContainer');
+                // [修改] 同时应用到两个 container
+                const $containers = $('#calendarAppContainer, #secondInterfaceContainer'); 
                 const $customSwatch = $('#custom-wallpaper-swatch');
 
-                $container.removeClass('has-wallpaper wallpaper-blur-active light-text-theme');
+                $containers.removeClass('has-wallpaper wallpaper-blur-active light-text-theme');
                 $('#wallpaperBlurToggle').prop('checked', settings.isBlurred);
 
                 // 1. Always display the custom swatch if an image URL is stored
@@ -2453,37 +2804,45 @@
                     $customSwatch.hide();
                 }
 
-                $container.get(0).style.setProperty('--current-background', 'none'); // Default to none first
+                $containers.each(function() {
+                    $(this).get(0).style.setProperty('--current-background', 'none'); // Default to none first
+                });
 
                 if (settings.type === 'color') {
                     // 2. Color mode: Set container color and transparent background
-                    $container.css('background-color', settings.value);
-                    $container.get(0).style.setProperty('--current-background', 'none');
+                    $containers.css('background-color', settings.value);
+                    $containers.each(function() {
+                        $(this).get(0).style.setProperty('--current-background', 'none');
+                    });
                     // If dark color, enable light text theme
                     if (['#2c3e50', '#3498db', '#e74c3c', '#1abc9c'].includes(settings.value)) {
-                        $container.addClass('light-text-theme');
+                        $containers.addClass('light-text-theme');
                     }
                 } else if (settings.type === 'image' && settings.value) {
                     // 3. Image mode: Set image on the ::before pseudo-element
                     
                     // [FIX] 强制更新 CSS 变量以避免浏览器缓存 Data URI
                     const backgroundStyle = `url('${settings.value}')`;
-                    $container.get(0).style.setProperty('--current-background', backgroundStyle);
+                    $containers.each(function() {
+                        $(this).get(0).style.setProperty('--current-background', backgroundStyle);
+                    });
                     
-                    $container.addClass('has-wallpaper');
-                    $container.css('background-color', 'transparent'); 
+                    $containers.addClass('has-wallpaper');
+                    $containers.css('background-color', 'transparent'); 
 
                     // [FIX] 始终为图片背景应用浅色文本，防止深色壁纸+深色文字
-                    $container.addClass('light-text-theme');
+                    $containers.addClass('light-text-theme');
 
                     if (settings.isBlurred) {
-                         $container.addClass('wallpaper-blur-active');
+                         $containers.addClass('wallpaper-blur-active');
                     }
                 } else {
                     // Fallback to default light color if type is 'none' or image failed
-                    $container.get(0).style.setProperty('--current-background', 'none');
-                    $container.css('background-color', 'rgba(255, 255, 255, 0.85)');
-                    $container.removeClass('light-text-theme');
+                    $containers.each(function() {
+                        $(this).get(0).style.setProperty('--current-background', 'none');
+                    });
+                    $containers.css('background-color', 'rgba(255, 255, 255, 0.85)');
+                    $containers.removeClass('light-text-theme');
                 }
             }
 
@@ -2565,9 +2924,272 @@
             }
 
 
-            // Initial render
+            // =======================================
+            // [新增] 修仙游戏逻辑
+            // =======================================
+
+            /**
+             * [游戏] 1. 计算玩家等级和修为
+             * @param {number} totalNetProfit - 玩家的总净收益 (USD)
+             */
+            function calculatePlayerLevel(totalNetProfit) {
+                // 定义等级阈值
+                const levels = [
+                    { threshold: 0, name: '凡人', tier: 0, class: 'level-lianqi' },
+                    { threshold: 100, name: '炼气期', tier: 1, class: 'level-lianqi' },
+                    { threshold: 500, name: '炼气期', tier: 5, class: 'level-lianqi' },
+                    { threshold: 1000, name: '筑基期', tier: 1, class: 'level-zhuji' },
+                    { threshold: 3000, name: '筑基期', tier: 3, class: 'level-zhuji' },
+                    { threshold: 5000, name: '结丹期', tier: 1, class: 'level-jiedan' },
+                    { threshold: 10000, name: '结丹期', tier: 5, class: 'level-jiedan' },
+                    { threshold: 20000, name: '元婴期', tier: 1, class: 'level-yuanying' },
+                    { threshold: 50000, name: '化神期', tier: 1, class: 'level-huashen' },
+                    { threshold: 100000, name: '大乘期', tier: 1, class: 'level-dacheng' },
+                    { threshold: 500000, name: '真仙', tier: 1, class: 'level-xian' }
+                ];
+
+                let currentLevel = levels[0];
+                let nextLevel = levels[1];
+
+                // 倒序查找当前等级
+                for (let i = levels.length - 1; i >= 0; i--) {
+                    if (totalNetProfit >= levels[i].threshold) {
+                        currentLevel = levels[i];
+                        nextLevel = (i < levels.length - 1) ? levels[i + 1] : levels[i]; // 如果是最高级，下一级是自己
+                        break;
+                    }
+                }
+
+                // 计算进度条
+                const levelBase = currentLevel.threshold;
+                const nextLevelThreshold = nextLevel.threshold;
+                let progressPercent = 0;
+                let progressText = `${Math.floor(totalNetProfit)} / ${nextLevelThreshold}`;
+
+                if (nextLevelThreshold <= levelBase) { // 满级
+                    progressPercent = 100;
+                    progressText = "已达化境";
+                } else {
+                    const progress = totalNetProfit - levelBase;
+                    const totalForLevel = nextLevelThreshold - levelBase;
+                    progressPercent = Math.min(100, (progress / totalForLevel) * 100);
+                }
+                
+                const levelName = `${currentLevel.name} ${currentLevel.tier > 0 ? `· ${currentLevel.tier}阶` : ''}`;
+
+                return {
+                    levelName: levelName,
+                    levelClass: currentLevel.class,
+                    progressPercent: progressPercent.toFixed(2),
+                    progressText: progressText
+                };
+            }
+
+            /**
+             * [游戏] 2. 转换收益为功法
+             * @param {string} subtype - 日历条目的 subtype
+             * @param {string} projectName - 项目名称
+             */
+            function getSkillBook(subtype, projectName) {
+                let name = "《未知功法》";
+                let icon = "fa-book-dead";
+                let qualityClass = "list-group-item-light"; // 默认品质
+
+                switch (subtype) {
+                    case 'airdrop':
+                        name = `《天降秘籍：${projectName}》`;
+                        icon = "fa-parachute-box";
+                        qualityClass = "list-group-item-primary"; // 蓝色
+                        break;
+                    case 'tge':
+                        name = `《TGE心法：${projectName}》`;
+                        icon = "fa-rocket";
+                        qualityClass = "list-group-item-info"; // 青色
+                        break;
+                    case 'trading':
+                        name = `《交易战法：${projectName}》`;
+                        icon = "fa-trophy";
+                        qualityClass = "list-group-item-warning"; // 黄色
+                        break;
+                    case 'booster':
+                        name = `《Booster神通：${projectName}》`;
+                        icon = "fa-bolt";
+                        qualityClass = "list-group-item-success"; // 绿色
+                        break;
+                }
+                return { name, icon, qualityClass };
+            }
+
+
+            /**
+             * [游戏] 3. 更新游戏UI (核心函数)
+             */
+            function updateGameUI() {
+                const allData = loadData();
+                let totalNetProfit = 0;
+                let totalBattlePower = 0;
+                const skills = [];
+
+                // 1. 遍历所有数据
+                Object.keys(allData).forEach(dateKey => {
+                    allData[dateKey].forEach(entry => {
+                        const value = parseFloat(entry.estimatedValue || 0);
+                        if (isNaN(value)) return;
+
+                        // 总修为 = 总净收益 (包括磨损)
+                        totalNetProfit += value;
+
+                        // 功法和战力 = 仅计算正收益
+                        if (value > 0 && (entry.subtype !== 'fastExpense')) {
+                            // 总战力
+                            totalBattlePower += value;
+                            
+                            // 功法
+                            const skill = getSkillBook(entry.subtype || 'airdrop', entry.projectName || '未知');
+                            skills.push({
+                                name: skill.name,
+                                power: Math.floor(value),
+                                icon: skill.icon,
+                                qualityClass: skill.qualityClass
+                            });
+                        }
+                    });
+                });
+
+                // 确保修为不会是负数（凡人）
+                const displayNetProfit = Math.max(0, totalNetProfit);
+
+                // 2. 更新角色面板
+                const playerLevel = calculatePlayerLevel(displayNetProfit);
+                const $playerLevel = $('#playerLevel');
+                $playerLevel.text(playerLevel.levelName);
+                // 移除旧的颜色 class, 添加新的
+                $playerLevel.removeClass('level-lianqi level-zhuji level-jiedan level-yuanying level-huashen level-dacheng level-xian').addClass(playerLevel.levelClass);
+                
+                // 更新进度条
+                const $progressBar = $('#playerProgressBar');
+                $progressBar.css('width', playerLevel.progressPercent + '%');
+                $progressBar.text(playerLevel.progressText);
+                $progressBar.attr('aria-valuenow', playerLevel.progressPercent);
+
+                // 3. 更新功法背包
+                const $skillsList = $('#playerSkillsList');
+                $skillsList.empty();
+                if (skills.length === 0) {
+                    $skillsList.html('<a href="#" class="list-group-item list-group-item-action text-muted text-center">暂未领悟任何功法...</a>');
+                } else {
+                    // 按战力（修为）排序
+                    skills.sort((a, b) => b.power - a.power);
+                    
+                    skills.forEach(skill => {
+                        const html = `
+                            <div class="list-group-item d-flex justify-content-between align-items-center ${skill.qualityClass}">
+                                <div>
+                                    <i class="fas ${skill.icon} me-2"></i>
+                                    <strong>${skill.name}</strong>
+                                </div>
+                                <span class="badge bg-danger rounded-pill">战力 +${skill.power}</span>
+                            </div>
+                        `;
+                        $skillsList.append(html);
+                    });
+                }
+
+                // 4. 将总战力存储在背包列表上，供战斗时使用
+                $('#playerSkillsList').data('playerPower', Math.floor(totalBattlePower));
+            }
+
+            /**
+             * [游戏] 4. 向战斗日志添加条目
+             */
+            function addBattleLog(message) {
+                const $log = $('#battleLog');
+                const timestamp = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+                $log.prepend(`<div>[${timestamp}] ${message}</div>`);
+            }
+          /**
+             * [游戏] 5. 渲染关卡列表
+             */
+            function renderLevelList() {
+                const $container = $('#levelListContainer');
+                $container.empty(); // 清空 "加载中..."
+
+                gameLevels.forEach(level => {
+                    const isBoss = level.type === 'boss';
+                    const btnClass = isBoss ? 'type-boss' : 'type-mob';
+                    const icon = isBoss ? 'fa-skull-crossbones' : 'fa-paw';
+
+                    const html = `
+                        <button class="btn level-btn ${btnClass}" data-level-id="${level.id}" data-enemy-power="${level.power}" data-level-name="${level.name}">
+                            <span class="level-name">
+                                <i class="fas ${icon} me-2"></i>
+                                ${level.name}
+                            </span>
+                            <span class="level-power">
+                                推荐战力: ${level.power}
+                            </span>
+                        </button>
+                    `;
+                    $container.append(html);
+                });
+            }
+
+            // [游戏] 事件：点击“挑战AI”按钮
+            // ... (下一步我们将修改这里)
+
+           // [修改] 游戏事件：点击“关卡”按钮
+            $('#levelListContainer').on('click', '.level-btn', function() {
+                const $btn = $(this);
+                // [修改] 我们从 #playerSkillsList 读取玩家总战力 (在 updateGameUI 中存入)
+                const playerPower = $('#playerSkillsList').data('playerPower') || 0; 
+
+                // 1. 从点击的按钮获取关卡数据
+                const enemyPower = $btn.data('enemy-power');
+                const levelName = $btn.data('level-name');
+
+                // 禁用所有按钮防止连点
+                $('.level-btn').prop('disabled', true);
+                
+                // 2. 清空日志
+                $('#battleLog').html('');
+                addBattleLog(`你进入了【${levelName}】...`);
+
+                addBattleLog(`你的总战力为: <strong class="text-success">${playerPower}</strong>`);
+
+                setTimeout(() => {
+                    addBattleLog(`遭遇对手！战力为: <strong class="text-danger">${enemyPower}</strong>`);
+                }, 1000);
+
+                // 3. 判定胜负
+                setTimeout(() => {
+                    if (playerPower > enemyPower) {
+                        const diff = playerPower - enemyPower;
+                        addBattleLog(`<strong class="text-success">挑战成功！</strong> 你以 ${diff} 点战力优势获胜！`);
+                    } else if (playerPower < enemyPower) {
+                        const diff = enemyPower - playerPower;
+                        addBattleLog(`<strong class="text-danger">挑战失败...</strong> 对手比你强 ${diff} 点战力。`);
+                    } else {
+                        addBattleLog(`<strong class="text-warning">平局！</strong> 双方势均力敌。`);
+                    }
+
+                    // 恢复按钮
+                    $('.level-btn').prop('disabled', false);
+                }, 2000);
+            });
+
+            // [游戏] 事件：当切换到“修仙面板”Tab时，强制刷新一次数据
+            $('#nav-second-tab').on('shown.bs.tab', function (e) {
+                updateGameUI();
+            });
+
+            // --- 初始加载 ---
             renderCalendar();
             applyWallpaperSettings();
+            
+            // [游戏] 页面加载时，立即计算一次游戏数据
+            updateGameUI();
+          // [新增] 渲染关卡列表
+            renderLevelList();
         });
     </script>
 
