@@ -823,8 +823,133 @@
 }
 .level-btn.type-boss .level-power {
     color: #d32f2f;
+}/* [新增] 背包折叠样式 */
+.skills-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 10px 15px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    font-size: 1.25rem; /* h4 尺寸 */
+    font-weight: 600;
+    color: #333;
+    transition: background-color 0.2s ease, border-radius 0.3s ease;
 }
-    </style>
+.skills-panel-header:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+/* 当折叠时，保持圆角 */
+.skills-panel-header[aria-expanded="false"] {
+    border-radius: 12px;
+}
+/* 当展开时，只保留顶部圆角 */
+.skills-panel-header[aria-expanded="true"] {
+    border-radius: 12px 12px 0 0;
+}
+
+.skills-panel-header .chevron-icon {
+    transition: transform 0.3s ease;
+    font-size: 1rem;
+    color: #0d6efd;
+}
+/* 箭头旋转 */
+.skills-panel-header[aria-expanded="false"] .chevron-icon {
+    transform: rotate(-90deg);
+}
+
+.skills-panel .collapse-content {
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.6);
+    border-radius: 0 0 12px 12px;
+    border: 1px solid rgba(0,0,0,0.05);
+    border-top: none;
+    margin-top: 0px; 
+}/* [新增] 功法背包内部的折叠分类 (Accordion) */
+.skill-accordion {
+    /* 移除默认的 accordion 边框和圆角，让它更服帖 */
+    --bs-accordion-border-width: 0;
+    --bs-accordion-border-radius: 0;
+}
+.skill-accordion-item {
+    background-color: rgba(0, 0, 0, 0.03); /* 给每个分类一个淡淡的底色 */
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 10px !important; /* 强制圆角 */
+    margin-bottom: 8px;
+    overflow: hidden; /* 确保子元素不会溢出圆角 */
+}
+.skill-accordion-button {
+    font-weight: 600;
+    color: #333;
+    background-color: rgba(255, 255, 255, 0.4);
+    padding: 0.8rem 1.1rem;
+    box-shadow: none !important; /* 移除点击阴影 */
+}
+.skill-accordion-button:not(.collapsed) {
+    background-color: rgba(255, 255, 255, 0.8);
+    color: #0d6efd;
+}
+/* 旋转箭头 */
+.skill-accordion-button::after {
+    transition: transform 0.2s ease-in-out;
+}
+.skill-accordion-button:not(.collapsed)::after {
+    transform: rotate(-180deg);
+}
+.skill-accordion-body {
+    padding: 0 !important; /* 移除内边距，让 list-group 填满 */
+}
+.skill-accordion-body .list-group-item {
+    border-left: none;
+    border-right: none;
+    background-color: rgba(255, 255, 255, 0.6);
+}
+.skill-accordion-body .list-group-item:last-child {
+    border-bottom: none;
+    border-radius: 0 0 8px 8px; /* 匹配父级圆角 */
+}
+.skill-accordion-body .skill-name {
+    font-size: 0.9rem;
+    font-style: italic;
+}
+/* 空状态的样式 */
+.skill-empty-state {
+    background-color: rgba(255, 255, 255, 0.6);
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.08);
+}
+   /* [新增] 关卡按钮 - 已通关 */
+.level-btn.type-cleared {
+    background-color: #e6f7ff;
+    color: #0d6efd;
+    border-color: rgba(13, 110, 253, 0.2);
+    font-weight: 500;
+}
+.level-btn.type-cleared .level-name {
+    text-decoration: line-through;
+}
+.level-btn.type-cleared:hover {
+    background-color: #d0eaff;
+}
+.level-btn.type-cleared .level-power {
+    color: #0d6efd;
+}
+
+/* [新增] 关卡按钮 - 已锁定 */
+.level-btn.type-locked {
+    background-color: #f8f9fa;
+    color: #adb5bd;
+    border-color: rgba(0,0,0,0.05);
+    pointer-events: none; /* 无法点击 */
+}
+.level-btn.type-locked .level-power {
+    color: #adb5bd;
+} </style>
 </head><body>
 
     <div class="main-app-wrapper" style="max-width: 1050px; margin: 0 auto;">
@@ -921,49 +1046,58 @@
                 </div>
 
                 <div class="skills-panel mt-4">
-                    <h4 class="text-center mb-3">我的背包</h4>
+                    <div class="skills-panel mt-4">
                     
-                    <ul class="nav nav-pills nav-fill mb-3" id="backpackTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="skills-tab" data-bs-toggle="tab" data-bs-target="#skills-pane" type="button" role="tab" aria-controls="skills-pane" aria-selected="true">
-                                <i class="fas fa-book me-1"></i> 功法
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="treasures-tab" data-bs-toggle="tab" data-bs-target="#treasures-pane" type="button" role="tab" aria-controls="treasures-pane" aria-selected="false">
-                                <i class="fas fa-gem me-1"></i> 法宝
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="pills-tab" data-bs-toggle="tab" data-bs-target="#pills-pane" type="button" role="tab" aria-controls="pills-pane" aria-selected="false">
-                                <i class="fas fa-pills me-1"></i> 丹药
-                            </button>
-                        </li>
-                    </ul>
+                    <button class="skills-panel-header" type="button" data-bs-toggle="collapse" data-bs-target="#backpackCollapseContent" aria-expanded="true" aria-controls="backpackCollapseContent">
+                        <span><i class="fas fa-briefcase me-2"></i> 我的背包</span>
+                        <i class="fas fa-chevron-down chevron-icon"></i>
+                    </button>
 
-                    <div class="tab-content" id="backpackTabContent">
-                        
-                        <div class="tab-pane fade show active" id="skills-pane" role="tabpanel" aria-labelledby="skills-tab">
-                            <div class="list-group" id="playerSkillsList">
-                                <a href="#" class="list-group-item list-group-item-action text-muted text-center">
+                    <div class="collapse show" id="backpackCollapseContent">
+                        <div class="collapse-content">
+                            <ul class="nav nav-pills nav-fill mb-3" id="backpackTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="skills-tab" data-bs-toggle="tab" data-bs-target="#skills-pane" type="button" role="tab" aria-controls="skills-pane" aria-selected="true">
+                                        <i class="fas fa-book me-1"></i> 功法
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="treasures-tab" data-bs-toggle="tab" data-bs-target="#treasures-pane" type="button" role="tab" aria-controls="treasures-pane" aria-selected="false">
+                                        <i class="fas fa-gem me-1"></i> 法宝
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="pills-tab" data-bs-toggle="tab" data-bs-target="#pills-pane" type="button" role="tab" aria-controls="pills-pane" aria-selected="false">
+                                        <i class="fas fa-pills me-1"></i> 丹药
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <div class="tab-content" id="backpackTabContent">
+                                
+                               <div class="tab-pane fade show active" id="skills-pane" role="tabpanel" aria-labelledby="skills-tab">
+                            <div class="accordion skill-accordion" id="playerSkillsList">
+                                <div class="text-center p-3 text-muted skill-empty-state">
                                     暂未领悟任何功法...
-                                </a>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="tab-pane fade" id="treasures-pane" role="tabpanel" aria-labelledby="treasures-tab">
-                            <div class="list-group">
-                                <a href="#" class="list-group-item list-group-item-action text-muted text-center">
-                                    暂无任何法宝...
-                                </a>
-                            </div>
-                        </div>
+                                <div class="tab-pane fade" id="treasures-pane" role="tabpanel" aria-labelledby="treasures-tab">
+                                    <div class="list-group">
+                                        <a href="#" class="list-group-item list-group-item-action text-muted text-center">
+                                            暂无任何法宝...
+                                        </a>
+                                    </div>
+                                </div>
 
-                        <div class="tab-pane fade" id="pills-pane" role="tabpanel" aria-labelledby="pills-tab">
-                            <div class="list-group">
-                                <a href="#" class="list-group-item list-group-item-action text-muted text-center">
-                                    暂无任何丹药...
-                                </a>
+                                <div class="tab-pane fade" id="pills-pane" role="tabpanel" aria-labelledby="pills-tab">
+                                    <div class="list-group">
+                                        <a href="#" class="list-group-item list-group-item-action text-muted text-center">
+                                            暂无任何丹药...
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1344,7 +1478,39 @@
         function saveData(newData) {
             data = newData;
             localStorage.setItem('airdropCalendarData', JSON.stringify(data));
-            
+            // [新增] 游戏化：每当数据保存时，都更新修仙面板
+            updateGameUI();
+        }
+
+        /**
+         * [游戏] 新增：加载游戏存档 (已通关的关卡)
+         */
+        function loadGameData() {
+            try {
+                const storedData = localStorage.getItem('airdropGameData');
+                const defaultData = {
+                    clearedLevelIds: [] // 默认一个都没通关
+                };
+                return storedData ? JSON.parse(storedData) : defaultData;
+            } catch (e) {
+                console.error("Error loading game data:", e);
+                return { clearedLevelIds: [] };
+            }
+        }
+
+        /**
+         * [游戏] 新增：保存游戏存档
+         * @param {Array<number>} clearedIds - 已通关关卡ID的数组
+         */
+        function saveGameData(clearedIds) {
+            const gameData = {
+                clearedLevelIds: clearedIds
+            };
+            localStorage.setItem('airdropGameData', JSON.stringify(gameData));
+        }
+
+        function formatCurrency(value) {
+        // ... (你现有的函数)
             // [新增] 游戏化：每当数据保存时，都更新修仙面板
             updateGameUI();
         }
@@ -3045,13 +3211,15 @@
                             totalBattlePower += value;
                             
                             // 功法
-                            const skill = getSkillBook(entry.subtype || 'airdrop', entry.projectName || '未知');
-                            skills.push({
-                                name: skill.name,
-                                power: Math.floor(value),
-                                icon: skill.icon,
-                                qualityClass: skill.qualityClass
-                            });
+                    const subtype = entry.subtype || 'airdrop'; // [新增] 获取 subtype
+                    const skill = getSkillBook(subtype, entry.projectName || '未知');
+                    skills.push({
+                        subtype: subtype, // [新增] 把 subtype 存进去
+                        name: skill.name,
+                        power: Math.floor(value),
+                        icon: skill.icon,
+                        qualityClass: skill.qualityClass
+                    });
                         }
                     });
                 });
@@ -3072,27 +3240,88 @@
                 $progressBar.text(playerLevel.progressText);
                 $progressBar.attr('aria-valuenow', playerLevel.progressPercent);
 
-                // 3. 更新功法背包
-                const $skillsList = $('#playerSkillsList');
-                $skillsList.empty();
+                // 3. 更新功法背包 (带分类折叠)
+                const $skillsListContainer = $('#playerSkillsList'); // 这是我们的 Accordion 容器
+                $skillsListContainer.empty(); // 清空
+
                 if (skills.length === 0) {
-                    $skillsList.html('<a href="#" class="list-group-item list-group-item-action text-muted text-center">暂未领悟任何功法...</a>');
+                    $skillsListContainer.html('<div class="text-center p-3 text-muted skill-empty-state">暂未领悟任何功法...</div>');
                 } else {
-                    // 按战力（修为）排序
-                    skills.sort((a, b) => b.power - a.power);
-                    
+                    // 1. 按 subtype 分组
+                    const groupedSkills = {
+                        airdrop: [],
+                        tge: [],
+                        trading: [],
+                        booster: []
+                    };
+
                     skills.forEach(skill => {
-                        const html = `
-                            <div class="list-group-item d-flex justify-content-between align-items-center ${skill.qualityClass}">
-                                <div>
-                                    <i class="fas ${skill.icon} me-2"></i>
-                                    <strong>${skill.name}</strong>
-                                </div>
-                                <span class="badge bg-danger rounded-pill">战力 +${skill.power}</span>
-                            </div>
-                        `;
-                        $skillsList.append(html);
+                        if (groupedSkills.hasOwnProperty(skill.subtype)) {
+                            groupedSkills[skill.subtype].push(skill);
+                        }
                     });
+
+                    // 2. 定义组的显示信息 (按你希望的顺序)
+                    const groupInfo = [
+                        { key: 'airdrop', name: '天降秘籍', icon: 'fa-parachute-box' },
+                        { key: 'trading', name: '交易战法', icon: 'fa-trophy' },
+                        { key: 'tge', name: 'TGE心法', icon: 'fa-rocket' },
+                        { key: 'booster', name: 'Booster神通', icon: 'fa-bolt' }
+                    ];
+
+                    let accordionHtml = '';
+                    let hasSkills = false; // 再次检查，防止空数组
+
+                    // 3. 遍历组，创建 Accordion
+                    groupInfo.forEach(group => {
+                        const groupKey = group.key;
+                        const groupSkills = groupedSkills[groupKey];
+                        
+                        // 只为有功法的类别创建折叠项
+                        if (groupSkills.length > 0) {
+                            hasSkills = true;
+                            // 按战力倒序排序
+                            groupSkills.sort((a, b) => b.power - a.power);
+
+                            const collapseId = `skill-group-${groupKey}`;
+                            const headerId = `skill-header-${groupKey}`;
+
+                            // 构建手风琴头部
+                            accordionHtml += `
+                            <div class="accordion-item skill-accordion-item">
+                                <h2 class="accordion-header" id="${headerId}">
+                                    <button class="accordion-button skill-accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" aria-controls="${collapseId}">
+                                        <i class="fas ${group.icon} me-2"></i>
+                                        <strong>${group.name}</strong>
+                                        <span class="badge bg-secondary rounded-pill ms-auto me-3">${groupSkills.length} 门</span>
+                                    </button>
+                                </h2>
+                                <div id="${collapseId}" class="accordion-collapse collapse" aria-labelledby="${headerId}">
+                                    <div class="accordion-body skill-accordion-body list-group list-group-flush p-0">
+                            `;
+
+                            // 构建手风琴内容 (功法列表)
+                            groupSkills.forEach(skill => {
+                                accordionHtml += `
+                                <div class="list-group-item d-flex justify-content-between align-items-center ${skill.qualityClass} ps-3">
+                                    <span class="skill-name">${skill.name}</span>
+                                    <span class="badge bg-danger rounded-pill">战力 +${skill.power}</span>
+                                </div>
+                                `;
+                            });
+
+                            accordionHtml += `</div></div></div>`; // close body, collapse, item
+                        }
+                    });
+
+                    // 4. 插入 HTML
+                    if (hasSkills) {
+                        $skillsListContainer.html(accordionHtml);
+                    } else {
+                         // Fallback，如果 skills 数组不为空，但分组后全空了（理论上不会发生）
+                         $skillsListContainer.html('<div class="text-center p-3 text-muted skill-empty-state">暂未领悟任何功法...</div>');
+                    }
+                
                 }
 
                 // 4. 将总战力存储在背包列表上，供战斗时使用
@@ -3112,15 +3341,42 @@
              */
             function renderLevelList() {
                 const $container = $('#levelListContainer');
-                $container.empty(); // 清空 "加载中..."
+                $container.empty(); // 清空
+
+                const gameData = loadGameData();
+                const clearedIds = new Set(gameData.clearedLevelIds); // 使用 Set 方便查询
+
+                // 找到玩家应该挑战的最高关卡 ID
+                // 逻辑：已通关的最高ID + 1，或者 1 (如果一个都没通关)
+                const highestClearedId = Math.max(0, ...clearedIds);
+                const nextLevelToUnlock = highestClearedId + 1;
 
                 gameLevels.forEach(level => {
-                    const isBoss = level.type === 'boss';
-                    const btnClass = isBoss ? 'type-boss' : 'type-mob';
-                    const icon = isBoss ? 'fa-skull-crossbones' : 'fa-paw';
+                    let btnClass = '';
+                    let icon = '';
+                    let isDisabled = false;
+
+                    if (clearedIds.has(level.id)) {
+                        // 1. 已通关
+                        btnClass = 'type-cleared';
+                        icon = 'fa-check-circle';
+                    } else if (level.id === nextLevelToUnlock) {
+                        // 2. 下一个要挑战的
+                        btnClass = level.type === 'boss' ? 'type-boss' : 'type-mob';
+                        icon = level.type === 'boss' ? 'fa-skull-crossbones' : 'fa-paw';
+                    } else if (level.id > nextLevelToUnlock) {
+                        // 3. 已锁定
+                        btnClass = 'type-locked';
+                        icon = 'fa-lock';
+                        isDisabled = true; // 无法点击
+                    }
 
                     const html = `
-                        <button class="btn level-btn ${btnClass}" data-level-id="${level.id}" data-enemy-power="${level.power}" data-level-name="${level.name}">
+                        <button class="btn level-btn ${btnClass}" 
+                                data-level-id="${level.id}" 
+                                data-enemy-power="${level.power}" 
+                                data-level-name="${level.name}"
+                                ${isDisabled ? 'disabled' : ''}>
                             <span class="level-name">
                                 <i class="fas ${icon} me-2"></i>
                                 ${level.name}
@@ -3132,6 +3388,7 @@
                     `;
                     $container.append(html);
                 });
+            
             }
 
             // [游戏] 事件：点击“挑战AI”按钮
@@ -3139,21 +3396,20 @@
 
            // [修改] 游戏事件：点击“关卡”按钮
             $('#levelListContainer').on('click', '.level-btn', function() {
-                const $btn = $(this);
-                // [修改] 我们从 #playerSkillsList 读取玩家总战力 (在 updateGameUI 中存入)
+             const $btn = $(this);
                 const playerPower = $('#playerSkillsList').data('playerPower') || 0; 
 
-                // 1. 从点击的按钮获取关卡数据
+                // 1. 从按钮获取数据
+                const levelId = $btn.data('level-id'); // [新增]
                 const enemyPower = $btn.data('enemy-power');
                 const levelName = $btn.data('level-name');
 
-                // 禁用所有按钮防止连点
+                // 禁用所有按钮
                 $('.level-btn').prop('disabled', true);
                 
                 // 2. 清空日志
                 $('#battleLog').html('');
                 addBattleLog(`你进入了【${levelName}】...`);
-
                 addBattleLog(`你的总战力为: <strong class="text-success">${playerPower}</strong>`);
 
                 setTimeout(() => {
@@ -3162,18 +3418,43 @@
 
                 // 3. 判定胜负
                 setTimeout(() => {
-                    if (playerPower > enemyPower) {
+                    let playerWon = (playerPower > enemyPower);
+                    
+                    if (playerPower === enemyPower) {
+                        addBattleLog(`<strong class="text-warning">平局！</strong> 双方势均力敌。`);
+                    } else if (playerWon) {
                         const diff = playerPower - enemyPower;
                         addBattleLog(`<strong class="text-success">挑战成功！</strong> 你以 ${diff} 点战力优势获胜！`);
-                    } else if (playerPower < enemyPower) {
+                    } else {
                         const diff = enemyPower - playerPower;
                         addBattleLog(`<strong class="text-danger">挑战失败...</strong> 对手比你强 ${diff} 点战力。`);
-                    } else {
-                        addBattleLog(`<strong class="text-warning">平局！</strong> 双方势均力敌。`);
                     }
 
-                    // 恢复按钮
-                    $('.level-btn').prop('disabled', false);
+                    // 4. [新增] 胜利存档
+                    if (playerWon) {
+                        const gameData = loadGameData();
+                        const clearedIds = new Set(gameData.clearedLevelIds); // 用 Set 避免重复
+                        
+                        if (!clearedIds.has(levelId)) {
+                            addBattleLog(`<strong class="text-primary">--- 关卡已通关，解锁新秘境！ ---</strong>`);
+                            clearedIds.add(levelId);
+                            saveGameData(Array.from(clearedIds)); // 保存
+                            
+                            // [新增] 立即刷新关卡列表
+                            renderLevelList(); 
+                        } else {
+                            // 胜利了，但是是重复挑战
+                            $('.level-btn').prop('disabled', false); // 只需恢复按钮
+                        }
+                    } else {
+                        // 失败了
+                        $('.level-btn').prop('disabled', false); // 恢复按钮
+                    }
+
+                    // 注意：因为 renderLevelList() 会重新生成按钮，
+                    // 所以我们不需要在胜利时手动恢复按钮状态 (prop('disabled', false))
+                    // 它会在刷新时自动恢复。
+
                 }, 2000);
             });
 
