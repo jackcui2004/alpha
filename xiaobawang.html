@@ -2,7 +2,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="format-detection" content="telephone=no">
     <meta name="format-detection" content="email=no">
@@ -17,196 +17,7 @@
     <meta name="description" content="非常适合在手机/电脑上在线游玩，近乎完美的还原任天堂FC/NES原版ROM游戏的视频和声音。" />
     <link href="css/jsnes.css" rel="stylesheet" type="text/css" />
     <link rel="shortcut icon" href="/static/favicon.ico">
-
-    <style>
-        /* 1. 基本重置，确保全屏 */
-        body,
-        html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-            background: #111;
-        }
-
-        /* 2. 将.panel作为我们的“定位画布” */
-        .main,
-        .panel {
-            height: 100vh;
-            width: 100vw;
-            position: relative;
-            /* 关键：设置为相对定位 */
-            box-sizing: border-box;
-            background: #111;
-        }
-
-        /* 3. 游戏屏幕区域 (来自 .function-area) */
-        .function-area {
-            /* 关键：让它脱离文档流，放在顶部 */
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            /* 关键：给底部的按钮留出空间，例如 200px */
-            bottom: 200px;
-            background: #000;
-            display: flex; /* 使用flex来处理内部的 .screen */
-            flex-direction: column;
-        }
-
-        .screen {
-            flex-grow: 1; /* 屏幕占满 .function-area 的所有空间 */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            min-height: 0;
-        }
-
-        /* 确保JS生成的canvas能正确缩放 */
-        #emulator {
-            width: 100%;
-            height: 100%;
-        }
-        #emulator canvas {
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: contain;
-            image-rendering: pixelated;
-        }
-
-        /* 4. 控制器区域 (D-Pad) */
-        .controller-area {
-            /* 关键：脱离文档流，放在左下角 */
-            position: absolute;
-            bottom: 20px;
-            /* 适配刘海屏 */
-            bottom: calc(20px + env(safe-area-inset-bottom));
-            left: 20px;
-            width: 130px;
-            height: 130px;
-            z-index: 10;
-        }
-        #controls-rocker {
-            width: 100% !important;
-            height: 100% !important;
-        }
-        .joydirection {
-             display: none; /* 隐藏原始的 U/R/D/L 按钮 */
-        }
-
-        /* 5. 功能键 (Start/Select) (来自 .function-area) */
-        .function {
-            /* 关键：脱离文档流，放在底部中央 */
-            position: absolute;
-            bottom: 140px; /* 放在D-Pad和A/B按钮的上方 */
-            bottom: calc(140px + env(safe-area-inset-bottom));
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 20px;
-            z-index: 10;
-        }
-        
-        .joybtn { /* 优化所有按钮的触摸样式 */
-            background: #707070;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-weight: bold;
-            padding: 10px 15px;
-            text-align: center;
-            box-shadow: 0 4px #444;
-            cursor: pointer;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        .joybtn:active {
-            box-shadow: 0 2px #222;
-            transform: translateY(2px);
-        }
-
-        /* 6. A/B 按钮区域 */
-        .action-area {
-            /* 关键：脱离文档流，放在右下角 */
-            position: absolute;
-            bottom: 30px;
-            bottom: calc(30px + env(safe-area-inset-bottom));
-            right: 20px;
-            z-index: 10;
-        }
-        #controls-fire {
-            display: flex;
-            gap: 25px;
-            align-items: center;
-        }
-        /* 优化 A/B 按钮 */
-        .action .joybtn {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            font-size: 1.2em;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 5px #444;
-        }
-        .action .a { background: #d9534f; }
-        .action .b { background: #f0ad4e; }
-        
-        /* 7. 隐藏其他桌面版元素 */
-        .sign,
-        .joy,
-        .readme,
-        a[href="index.html"] {
-            display: none;
-        }
-
-        /* 8. 横屏时的回退 (保持原状或优化) */
-        @media (orientation: landscape) {
-            /* 恢复原始布局，或者您可以添加横屏的绝对定位样式 */
-            /* 为简单起见，我们先移除所有定位，让它接近原始布局 */
-            .function-area, .controller-area, .function, .action-area {
-                position: static;
-                width: auto;
-                height: auto;
-                bottom: auto;
-                left: auto;
-                right: auto;
-                transform: none;
-            }
-            .panel {
-                /* 原始 jsnes.css 可能是 float 布局，这里用 flex 代替 */
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                justify-content: center;
-            }
-            .function-area {
-                flex-grow: 1;
-                height: 100%;
-                bottom: 0; /* 移除预留空间 */
-            }
-            .controller-area {
-                width: 150px; height: 150px;
-            }
-            .action-area {
-                width: 150px;
-            }
-            .action .joybtn {
-                width: 50px; height: 50px;
-            }
-            #controls-fire { gap: 15px; }
-            .function {
-                flex-direction: column; /* 竖排 Start/Select */
-                gap: 10px;
-                position: static;
-            }
-        }
-
-    </style>
-    </head>
+</head>
 
 <body>
     <div class="main">
@@ -222,15 +33,15 @@
                     </div>
                 </div>
                 <div class="joy">I</div>
-               <div><a href="https://github.com/lucaschungzsj/fcgame?tab=readme-ov-file#按键说明" tppabs="" target="_blank" class="readme">按键说明</a></div><a href="index.html">返回空投日历</a>
+               <div><a href="https://github.com/lucaschungzsj/fcgame?tab=readme-ov-file#按键说明" tppabs="" target="_blank" class="readme">按键说明</a></div>
             </div>
             <div class="function-area">
                 <div class="screen">
                     <div id="emulator" align="center" style="width:100%;height:100%"></div>
                 </div>
                 <div class="function">
-                    <button class="controls-center-select joybtn" id="joystick_btn_select">退出</button>
-                    <button class="controls-center-start joybtn" id="joystick_btn_start">开始</button>
+                    <button class="controls-center-select joybtn" id="joystick_btn_select" role="BUTTON_SELECT">Select</button>
+                    <button class="controls-center-start joybtn" id="joystick_btn_start" role="BUTTON_START">Start</button>
                 </div>
             </div>
             <div class="action-area">
@@ -245,7 +56,6 @@
         </div>
     </div>
 </body>
-
 <script src="lib/jquery-1.4.2.min.js" type="text/javascript" charset="utf-8"></script>
 <script src="lib/dynamicaudio-min.js" type="text/javascript" charset="utf-8"></script>
 <script src="source/nes.js" type="text/javascript" charset="utf-8"></script>
@@ -376,6 +186,9 @@
         });
     });
 </script>
+<!--[if IE]>
+    <script type="text/vbscript" src="lib/jsnes-ie-hacks.vbscript"></script>
+<![endif]-->
 <script>
     function touchDwon(evt) {
     nes.keyboard.keyDown({
@@ -401,7 +214,7 @@ var joystick = new Joystick({
     el: select("controls-rocker"),
     mode: 'static',
     color: "#808080",
-    size: 130, /* 匹配CSS中的 .controller-area 宽度 */
+    size: 100,
     isFourBtn: false,
     keyCodes: [87, 83, 65, 68],
     btn_down_fn: touchDwon,
@@ -410,4 +223,49 @@ var joystick = new Joystick({
 });
 joystick.init();
 </script>
+<!-- <script>
+    var url=location.href;
+    var imageUrl = '../static/fc.png';
+
+    $.ajax({
+        type : "get",
+        url : "/wx/jssdk?url="+url,
+        success : function(r){
+            var data = r.data;
+            wx.config({
+                debug: false,
+                appId: data.appId,
+                timestamp: data.timestamp,
+                nonceStr: data.nonceStr,
+                signature: data.signature,
+                jsApiList: [
+                    'onMenuShareTimeline',
+                    'onMenuShareAppMessage',
+                    'onMenuShareQQ',
+                    'onMenuShareWeibo',
+                    'onMenuShareQZone'
+
+                ]
+            });
+        }
+    });
+
+    wx.ready(function () {
+        var shareData = {
+            title: '小霸王游戏机，时光倒转回童年',
+            desc: '在线游玩魂斗罗/超级玛丽/双截龙/冒险岛等等八十款任天堂红白机游戏！爷的青春回来了',
+            link: url,
+            imgUrl: imageUrl
+        };
+
+        wx.onMenuShareAppMessage(shareData);//分享给好友
+        wx.onMenuShareTimeline(shareData);//分享到朋友圈
+        wx.onMenuShareQQ(shareData);//分享给手机QQ
+        wx.onMenuShareWeibo(shareData);//分享腾讯微博
+        wx.onMenuShareQZone(shareData);//分享到QQ空间
+    });
+    wx.error(function (res) {
+        //alert(res.errMsg);//错误提示
+    });
+</script> -->
 </html>
