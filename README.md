@@ -1,126 +1,59 @@
-# FCGame - FC/NES模拟器
-- **FC/NES模拟器，在线畅玩八十款任天堂红白机游戏，小霸王游戏机其乐无穷。支持魂斗罗/超级玛丽/双截龙等等几十款任天堂红白机游戏。**
-- 非常适合在手机/电脑上在线游玩，近乎完美的还原任天堂FC/NES原版ROM游戏的视频和声音。
+<p align="center">
+    <img src="https://i0.hdslb.com/bfs/article/2954c995c96dd4ece5922282f54ec58b8941412.png" width="400">
+</p>
+<p align="center">
+    <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-blue" alt="license MIT"></a>
+    <a href="https://qm.qq.com/q/iifNs5qukg"><img src="https://img.shields.io/badge/QQ%E7%BE%A4-920930589-green" alt="QQ群：920930589"></a>
+    <a href="https://www.taptap.cn/app/719622"><img src="https://img.shields.io/badge/TapTap-%E6%88%91%E7%9A%84%E6%96%87%E5%AD%97%E4%BF%AE%E4%BB%99%E5%85%A8%E9%9D%A0%E5%88%B7-18d6e0" alt="TapTap"></a>
+    <a href="https://hellogithub.com/repository/e73a691ffcfa4d0e92a05912fe8c0b46"><img src="https://abroad.hellogithub.com/v1/widgets/recommend.svg?rid=e73a691ffcfa4d0e92a05912fe8c0b46&claim_uid=OCYdts5lPczHag4&theme=small" alt="Featured｜HelloGitHub" /></a>
+</p>
 
-## FC模拟器网页效果图
-基于jsnes开源项目进行二次开发实现的网页在线玩fc游戏
+## 我的文字修仙全靠刷
 
-### 横屏效果
-![横屏预览](/static/landscape_mode.png)
+- 项目框架 [Vue.js](https://cn.vuejs.org)
+- 项目 UI [Element Plus](https://element-plus.org/zh-CN)
+- 状态管理库 [Pinia](https://pinia.vuejs.org/zh)
 
-### 竖屏效果
-![竖屏预览](/static/portrait_mode.png)
+Docker 贡献者：
 
-## 按键说明：
-移动端使用触摸操控，PC端按键映射如下：
+- wuchenchina [无尘](https://github.com/wuchenchina)
+- CoolXiTech [酷曦科技](https://github.com/CoolXiTech)
+- Firfr [Firfe](https://github.com/Firfr)
 
-| 按键 | player1 | player2 |
-| - | - | - |
-| Up | W | ↑ |
-| Down | S | ↓ |
-| Left | A | ← |
-| Right | D | → |
-| B | J | Num1 |
-| A | K | Num2 |
-| Select | Space | Num/ |
-| Start | Enter | Num* |
+鸣谢以上开源项目及贡献者，排名不分先后.
 
-## NES游戏列表
+## 快速开始
 
-| 类目 | 游戏名 | 文件名 |
-| - | - | - |
-| 经典热门 | - | - |
-|   | 沙罗曼蛇 (U) Life Force [!] | roms/Life Force [!].nes | 
-|   | 超级马里奥1 (W) Super Mario Bros. [!] | roms/(W) Super Mario Bros. [!].nes | 
-|   | 坦克 (J) Battle City [!] | roms/(J) Battle City.nes | 
-|   | 魂斗罗1 (U) 30S [!] | roms/Contra1(U)30S.nes | 
-|   | 赤影战士 Kage [!] | roms/Kage.nes | 
-|   | 脱狱 Cross Fire (J) | roms/Cross Fire (J).nes | 
-|   | 双截龙2 Double Dragon2 [!] | roms/Double Dragon2.nes | 
-|   | 塞尔达传说2：林克的冒险 [!] Zelda II - The Adventure of Link(U) [!] | roms/Zelda II - The Adventure of Link (U).nes | 
-|   | 冒险岛1 (J) Adventure Island [!] | roms/(J) Takahashi Meijin no Bouken Shima [!].nes | 
-|   | 1943 (U) 1943 - The Battle of Midway [!] | roms/1943.nes | 
-|   | 火箭车 (J) Road Fighter [!] | roms/(J) Road Fighter [!].nes | 
-|   | 越野机车 (JU) Excitebike [!] | roms/(JU) Excitebike [!].nes | 
-|   | 功夫 (J) (V1.2) Yie Ar Kung-Fu [!] | roms/(J) (V1.2) Yie Ar Kung-Fu [!].nes | 
-|   | 淘金者(汉化) [!] | roms/TaoJinZhe.nes | 
-|   | 俄罗斯方块 (U) Tetris 2 [!] | roms/Tetris 2 (U) [!].nes | 
-|   | 中国象棋 [!] | roms/Zhong Guo Xiang Qi.nes | 
-|   | 五子棋 (5) 日版 [!] | roms/5.nes | 
-|   | 炸弹人1 [!] (J) Bomberman [!] | roms/(J) Bomberman [!].nes | 
-| 超级玛丽 | - | - |
-|   | 超级马里奥1 (W) Super Mario Bros. [!] | roms/(W) Super Mario Bros. [!].nes | 
-|   | 超级马里奥2 (W) Super Mario Bros. 3 (U) | roms/Super Mario Bros. 3 (U) (PRG1) [!].nes | 
-|   | 马里奥拆屋工 (W) Wrecking Crew | roms/(W) Wrecking Crew [!].nes | 
-|   | 马里奥医生 (JU) Dr. Mario | roms/Dr. Mario (JU).nes | 
-| 坦克大战 | - | - |
-|   | 坦克大战 (J) Battle City [!] | roms/(J) Battle City.nes | 
-|   | 导弹坦克 (Ch) Missile Tank | roms/(Ch) Missile Tank.nes | 
-|   | 坦克1990 (Ch) Tank 1990 | roms/(Ch) Tank 1990.nes | 
-| 魂斗罗 | - | - |
-|   | 魂斗罗1 (U) 30S [!] | roms/Contra1(U)30S.nes | 
-|   | 魂斗罗1 (U) 30 | roms/Contra1(U)30.nes | 
-|   | 魂斗罗1 (U) 30F | roms/Contra1(U)30F.nes | 
-|   | 魂斗罗1 (U) 30L | roms/Contra1(U)30L.nes | 
-|   | 魂斗罗1 (U) 30M | roms/Contra1(U)30M.nes | 
-|   | 魂斗罗1 (U) S [!] | roms/Contra1(U)S.nes | 
-|   | 魂斗罗1 (U) F | roms/Contra1(U)F.nes | 
-|   | 魂斗罗1 (U) L | roms/Contra1(U)L.nes | 
-|   | 魂斗罗1 (U) M | roms/Contra1(U)M.nes | 
-| 双截龙 | - | - |
-|   | 双截龙2 Double Dragon2 [!] | roms/Double Dragon2.nes | 
-|   | 双截龙1 Double Dragon1 | roms/Double Dragon1.nes | 
-|   | 双截龙3 Double Dragon3 | roms/Double Dragon3.nes | 
-|   | 双截龙4 Double Dragon4 | roms/Double Dragon4.nes | 
-| 淘金者 | - | - |
-|   | 淘金者(汉化) [!] | roms/TaoJinZhe.nes | 
-|   | 淘金者(J) | roms/Championship Lode Runner (J).nes | 
-| 俄罗斯方块 | - | - |
-|   | 俄罗斯方块2 (U) Tetris 2 [!] | roms/Tetris 2 (U) [!].nes | 
-|   | 俄罗斯方块 LJ65 | roms/lj65.nes | 
-|   | 俄罗斯方块 Tetris(U) | roms/Tetris (U) [!].nes | 
-|   | 俄罗斯方块 (Tengen) Tetris [!] | roms/(Tengen) Tetris [!].nes | 
-| 飞机类 | - | - |
-|   | 沙罗曼蛇 (U) Life Force [!] | roms/Life Force [!].nes | 
-|   | 1943 (U) 1943 - The Battle of Midway [!] | roms/1943.nes | 
-|   | 兵蜂1 (J) TwinBee [!] | roms/(J) TwinBee [!].nes | 
-| 赛车类 | - | - |
-|   | 火箭车 (J) Road Fighter [!] | roms/(J) Road Fighter [!].nes | 
-|   | 越野机车 (JU) Excitebike [!] | roms/(JU) Excitebike [!].nes | 
-|   | F1赛车 (J) F-1 Race | roms/(J) F-1 Race [!].nes | 
-|   | 摩托车大赛 (JU) (PRG0) Mach Rider | roms/(JU) (PRG0) Mach Rider [!].nes | 
-| 运动类 | - | - |
-|   | 网球Tennis(JU) | roms/Tennis (JU) [!].nes | 
-|   | 高尔夫 Golf (JU) | roms/Golf (JU).nes | 
-| 棋牌类 | - | - |
-|   | 中国象棋 [!] | roms/Zhong Guo Xiang Qi.nes | 
-|   | 五子棋 (5) 日版 [!] | roms/5.nes | 
-|   | Concentration Room | roms/croom.nes | 
-|   | AV麻雀俱乐部 (Hacker) AV Mahjongg | roms/(Hacker) AV Mahjongg.nes | 
-| 其他 | - | - |
-|   | 马戏团 (J) Circus Charlie | roms/(J) Circus Charlie [!].nes | 
-|   | 敲冰块 (J) Ice Climber | roms/(J) Ice Climber.nes | 
-|   | 纽约大拳猫 (JP) | roms/RockinCats.nes | 
-|   | 撞球咖啡馆 Shufflepuck Cafe | roms/Shufflepuck Cafe.nes | 
-|   | 泡泡龙 Bubble Bobble (U) | roms/Bubble Bobble (U).nes | 
-|   | 地底探险1 (J) Spelunker | roms/(J) Spelunker [!].nes | 
-|   | 快乐猫 (J) Mappy | roms/(J) Mappy [!].nes | 
-|   | 成龙踢馆1 (J) Spartan X | roms/(J) Spartan X [!].nes | 
-|   | 猪小弟 (J) Pooyan | roms/(J) Pooyan.nes | 
-|   | 打砖块1 (J) Arkanoid | roms/(J) Arkanoid [!].nes | 
-| 不可用 | - | - |
-|   | 小蜜蜂 (J) Galaxian | roms/(J) Galaxian [!].nes | 
-|   | 赤色要塞 (KC) Jackal [!] | roms/Jackal.nes | 
-|   | 花式撞球 (U) Side Pocket | roms/Side Pocket.nes | 
-|   | 彩虹岛 (U) Rainbow Islands | roms/Rainbow Islands.nes | 
-|   | 快打旋风 (U) Mighty Final Fight [!] | roms/Mighty Final Fight.nes | 
-|   | 忍者龙剑传1 (PC10) Ninja Gaiden [!] | roms/Ninja_Gaiden1.nes | 
-|   | 忍者龙剑传2 (PC10) Ninja Gaiden II [!] | roms/Ninja_Gaiden2.nes | 
-|   | 忍者龙剑传3 (PC10) Ninja Gaiden III [!] | roms/Ninja_Gaiden3.nes | 
-|   | 七宝奇谋1 (J) Goonies, The [!] | roms/(J) Goonies, The [!].nes | 
-|   | 南极大冒险 (J) Antarctic Adventure | roms/(J) Antarctic Adventure [!].nes | 
-|   | 叮当1 (J) Dig Dug | roms/(J) Dig Dug [!].nes | 
-|   | 影之传说 (J) Kage no Densetsu [!] | roms/(J) Kage no Densetsu [!].nes | 
+- [本地安装指南](https://github.com/setube/vue-xiuxiangame/wiki/%E6%9C%AC%E5%9C%B0%E5%AE%89%E8%A3%85%E6%8C%87%E5%8D%97)
+- [Docker 部署指南](https://github.com/setube/vue-xiuxiangame/wiki/Docker%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97)
 
-## Star History
-[![Star History Chart](https://api.star-history.com/svg?repos=lucaschungzsj/fcgame&type=Date)](https://star-history.com/#lucaschungzsj/fcgame&Date)
+## 版权声明
+
+知识共享署名-非商业性使用 4.0 国际许可协议
+
+本作品采用知识共享署名-非商业性使用 4.0 国际许可协议进行许可。
+要查看此许可协议的副本，请访问 http://creativecommons.org/licenses/by-nc/4.0/。
+
+您自由地：
+共享 — 在任何媒介以任何形式复制、发行本作品
+改编 — 修改、转换或以本作品为基础进行创作
+
+惟须遵守以下条件：
+署名 — 您必须给出适当的署名，提供指向本许可协议的链接，同时标明是否（对原始作品）作了修改。您可以用任何合理的方式来署名，但不得以任何方式暗示许可人为您或您的使用背书。
+
+非商业性使用 — 您不得将本作品用于商业目的。
+
+没有附加限制 — 您不得适用法律术语或者技术措施从而限制其他人做许可协议允许的事情。
+
+声明：
+本作品是作者（谦君）的原创作品，项目源码地址：https://github.com/setube/vue-xiuxiangame
+本授权条款不得被视为或解释为对任何版权的放弃或其他限制。
+
+当您分享本作品的改编版本时，您必须：
+
+- 在显著位置标注原作者的署名
+- 保留本许可协议文档
+- 明确说明修改内容及修改日期
+- 使用相同的 CC BY-NC 4.0 协议进行分发
+
+© 2025 谦君 - 保留所有权利（根据本许可协议授予的权限除外）
